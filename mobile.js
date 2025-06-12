@@ -131,7 +131,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // 构建图片URL
             const productName = productNames[currentProduct];
             const colorName = colorNames[currentColor];
-            const imageUrl = `images/${encodeURIComponent(productName)}${encodeURIComponent(view === 'side' ? '-侧视图' : '')}${encodeURIComponent('-' + colorName)}.jpg`;
+            const suffix = view === 'side' ? '-侧视图' : '';
+            const imageUrl = `images/${encodeURIComponent(productName + suffix + '-' + colorName)}.jpg`;
 
             // 如果新的URL与当前URL相同，则跳过
             if (currentSrc.endsWith(imageUrl)) continue;
@@ -144,8 +145,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 await checkImage(imageUrl);
                 img.src = imageUrl;
                 container.classList.remove('loading');
+                console.log('成功加载图片:', imageUrl); // 添加调试日志
             } catch (error) {
-                console.log('图片不存在:', imageUrl);
+                console.log('图片加载失败:', imageUrl); // 添加调试日志
                 // 如果是侧视图且加载失败，保持当前图片不变
                 if (view === 'side' && currentSrc && !currentSrc.endsWith('lab-image.jpg')) {
                     container.classList.remove('loading');
