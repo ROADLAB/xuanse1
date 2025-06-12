@@ -148,11 +148,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('成功加载图片:', imageUrl);
             } catch (error) {
                 console.log('图片加载失败:', imageUrl);
-                // 如果是侧视图且加载失败，保持当前图片不变
-                if (view === 'side' && currentSrc && !currentSrc.includes('images/default.jpg')) {
-                    container.classList.remove('loading');
+                // 如果是侧视图且加载失败，尝试保持当前图片
+                if (view === 'side') {
+                    if (currentSrc && !currentSrc.includes('no-image.jpg')) {
+                        container.classList.remove('loading');
+                    } else {
+                        img.src = 'images/no-image.jpg';
+                        container.classList.remove('loading');
+                    }
                 } else {
-                    img.src = 'images/default.jpg';
+                    img.src = 'images/no-image.jpg';
                     container.classList.remove('loading');
                 }
             }
