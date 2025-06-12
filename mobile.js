@@ -135,10 +135,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const productName = productNames[currentProduct];
             const colorName = colorNames[currentColor];
             const suffix = view === 'side' ? '-侧视图' : '';
-            const imageUrl = `images/${encodeURIComponent(productName + suffix + '-' + colorName)}.jpg`;
+            // 获取当前页面的基础URL
+            const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+            const imageUrl = baseUrl + `images/${encodeURIComponent(productName + suffix + '-' + colorName)}.jpg`;
 
             // 如果新的URL与当前URL相同，则跳过
-            if (currentSrc.endsWith(imageUrl)) continue;
+            if (currentSrc === imageUrl) continue;
 
             // 添加加载状态
             container.classList.add('loading');
