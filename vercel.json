@@ -2,11 +2,29 @@
     "version": 2,
     "builds": [
         {
-            "src": "*.html",
+            "src": "**/*",
             "use": "@vercel/static"
         }
     ],
     "routes": [
+        {
+            "src": "/.*\\.css",
+            "headers": {
+                "Content-Type": "text/css"
+            }
+        },
+        {
+            "src": "/.*\\.js",
+            "headers": {
+                "Content-Type": "application/javascript"
+            }
+        },
+        {
+            "src": "/.*\\.(jpg|jpeg|png|gif)",
+            "headers": {
+                "Cache-Control": "public, max-age=86400"
+            }
+        },
         {
             "src": "/(.*)",
             "dest": "/$1"
