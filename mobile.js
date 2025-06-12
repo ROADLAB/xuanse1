@@ -7,9 +7,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalImage = document.getElementById('modalImage');
     const closeButton = document.querySelector('.close-button');
 
-    // 默认图片的base64编码
-    const defaultImageBase64 = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YwZjBmMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7lm77niYfmraPlnKjliqDovb08L3RleHQ+PC9zdmc+';
-
     // 图片缓存对象
     const imageCache = {};
 
@@ -129,32 +126,27 @@ document.addEventListener('DOMContentLoaded', function() {
         for (const container of imageContainers) {
             const view = container.dataset.view;
             const img = container.querySelector('.preview-image');
-            const currentSrc = img.src;
             
             // 构建图片URL
             const productName = productNames[currentProduct];
             const colorName = colorNames[currentColor];
-            const suffix = view === 'side' ? '-侧视图' : '';
-            // 获取当前页面的基础URL
-            const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-            const imageUrl = baseUrl + `images/${encodeURIComponent(productName + suffix + '-' + colorName)}.jpg`;
-
-            // 如果新的URL与当前URL相同，则跳过
-            if (currentSrc === imageUrl) continue;
+            const imageUrl = `images/${encodeURIComponent(productName)}${encodeURIComponent('-' + colorName)}${encodeURIComponent(view === 'side' ? '-侧视图' : '')}.jpg`;
 
             // 添加加载状态
             container.classList.add('loading');
 
             try {
+                // 清除之前的src，确保重新加载
+                img.src = '';
+                
                 // 检查图片是否存在
                 await checkImage(imageUrl);
                 img.src = imageUrl;
-                container.classList.remove('loading');
-                console.log('成功加载图片:', imageUrl);
             } catch (error) {
-                console.log('图片加载失败:', imageUrl);
-                // 使用默认图片
-                img.src = defaultImageBase64;
+                console.log('图片不存在:', imageUrl);
+                // 无论是正视图还是侧视图，如果图片不存在就显示默认图片
+                img.src = 'lab-image.jpg';
+            } finally {
                 container.classList.remove('loading');
             }
         }
@@ -178,10 +170,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const defaultButton = colorNav.querySelector(`[data-color="${defaultColor}"]`);
             colorNav.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
             defaultButton.classList.add('active');
+            // 清除图片缓存
+            imageCache = {};
         } else if (isColor) {
             currentColor = button.dataset.color;
             colorNav.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
             button.classList.add('active');
+            // 清除图片缓存
+            imageCache = {};
         }
 
         saveSelection();
