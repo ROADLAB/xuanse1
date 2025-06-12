@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeButton = document.querySelector('.close-button');
 
     // 图片缓存对象
-    const imageCache = {};
+    let imageCache = {};
 
     // 产品和颜色名称映射
     const productNames = {
