@@ -145,14 +145,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 await checkImage(imageUrl);
                 img.src = imageUrl;
                 container.classList.remove('loading');
-                console.log('成功加载图片:', imageUrl); // 添加调试日志
+                console.log('成功加载图片:', imageUrl);
             } catch (error) {
-                console.log('图片加载失败:', imageUrl); // 添加调试日志
+                console.log('图片加载失败:', imageUrl);
                 // 如果是侧视图且加载失败，保持当前图片不变
-                if (view === 'side' && currentSrc && !currentSrc.endsWith('lab-image.jpg')) {
+                if (view === 'side' && currentSrc && !currentSrc.includes('images/default.jpg')) {
                     container.classList.remove('loading');
                 } else {
-                    img.src = 'lab-image.jpg';
+                    img.src = 'images/default.jpg';
                     container.classList.remove('loading');
                 }
             }
