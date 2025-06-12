@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // 构建图片URL
             const productName = productNames[currentProduct];
             const colorName = colorNames[currentColor];
-            const imageUrl = `images/${productName}-${colorName}${view === 'side' ? '-侧视图' : ''}.jpg`;
+            const imageUrl = `images/${encodeURIComponent(productName)}${encodeURIComponent(view === 'side' ? '-侧视图' : '')}${encodeURIComponent('-' + colorName)}.jpg`;
 
             // 如果新的URL与当前URL相同，则跳过
             if (currentSrc.endsWith(imageUrl)) continue;
