@@ -7,6 +7,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalImage = document.getElementById('modalImage');
     const closeButton = document.querySelector('.close-button');
 
+    // 默认图片的base64编码
+    const defaultImageBase64 = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YwZjBmMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7lm77niYfmraPlnKjliqDovb08L3RleHQ+PC9zdmc+';
+
     // 图片缓存对象
     const imageCache = {};
 
@@ -148,18 +151,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('成功加载图片:', imageUrl);
             } catch (error) {
                 console.log('图片加载失败:', imageUrl);
-                // 如果是侧视图且加载失败，尝试保持当前图片
-                if (view === 'side') {
-                    if (currentSrc && !currentSrc.includes('no-image.jpg')) {
-                        container.classList.remove('loading');
-                    } else {
-                        img.src = 'images/no-image.jpg';
-                        container.classList.remove('loading');
-                    }
-                } else {
-                    img.src = 'images/no-image.jpg';
-                    container.classList.remove('loading');
-                }
+                // 使用默认图片
+                img.src = defaultImageBase64;
+                container.classList.remove('loading');
             }
         }
     }
