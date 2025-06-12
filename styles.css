@@ -1,0 +1,462 @@
+@font-face {
+    font-family: 'MicrosoftYaHei';
+    src: local('Microsoft YaHei');
+}
+
+/* 基础样式设置 */
+:root {
+    --primary-color: #EE7300;
+    --primary-hover: #FFF0ED;
+    --border-color: #EAEAEA;
+    --text-color: #333333;
+    --text-secondary: #666666;
+    --border-radius: 6px;
+    --transition-speed: 0.3s;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Inter, 'Microsoft YaHei', sans-serif;
+    background: #fff;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.container {
+    max-width: 1920px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 138px;
+}
+
+/* 导航组样式 */
+.nav-group {
+    display: flex;
+    gap: 20px;
+    min-height: 120px;
+}
+
+.product-section {
+    width: 622px;
+    min-height: 120px;
+    flex: 1 1 622px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.color-section {
+    width: 1002px;
+    min-height: 120px;
+    flex: 1 1 1002px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.section-content {
+    padding: 20px;
+    min-height: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 17px;
+}
+
+.section-content::after {
+    content: '';
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    top: 46px;
+    height: 1px;
+    background: var(--border-color);
+}
+
+.section-title {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.2;
+    color: var(--text-color);
+}
+
+.color-section .section-title {
+    font-size: 16px;
+    color: #333333;
+}
+
+.nav-items {
+    display: flex;
+    gap: 9px;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 42px;
+    border-radius: var(--border-radius);
+    font-size: 14px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    background: #F5F5F5;
+    white-space: nowrap;
+    transition: all var(--transition-speed) ease;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* 颜色选择按钮尺寸 */
+.color-section .nav-item {
+    width: 98px;
+    padding: 0;
+}
+
+/* 产品选择按钮尺寸 */
+.product-section .nav-item {
+    width: 138px;
+    padding: 0;
+}
+
+.nav-item:hover {
+    background: var(--primary-hover);
+    color: var(--primary-color);
+}
+
+.nav-item.active {
+    background: var(--primary-hover);
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+}
+
+/* 图片组样式 */
+.image-group {
+    display: flex;
+    gap: 20px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.image-container {
+    position: relative;
+    flex: 1;
+    min-width: 300px;
+    aspect-ratio: 16/9;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform var(--transition-speed) ease;
+    background: #F5F5F5;
+}
+
+.image-container:hover {
+    transform: scale(1.02);
+}
+
+.preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity var(--transition-speed) ease;
+    will-change: transform;
+}
+
+.loading-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 40px;
+    height: 40px;
+    margin: -20px 0 0 -20px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    display: none;
+}
+
+.image-container.loading .loading-spinner {
+    display: block;
+}
+
+.image-container.loading .preview-image {
+    opacity: 0.5;
+}
+
+/* 模态框样式 */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity var(--transition-speed) ease;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.modal.show {
+    display: flex;
+    opacity: 1;
+}
+
+.modal-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.close-button {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    color: #fff;
+    cursor: pointer;
+    z-index: 1001;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    transition: background-color var(--transition-speed) ease;
+}
+
+.close-button:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+#modalImage {
+    max-width: 100%;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* 响应式布局 */
+/* 大屏幕 (1920px 以上) */
+@media screen and (min-width: 1921px) {
+    .container {
+        max-width: 2560px;
+        padding: 0 200px;
+    }
+
+    .nav-group {
+        gap: 30px;
+    }
+
+    .product-section {
+        width: 800px;
+    }
+
+    .color-section {
+        width: 1200px;
+    }
+}
+
+/* 标准桌面布局 (1440px - 1920px) */
+@media screen and (min-width: 1440px) and (max-width: 1920px) {
+    .container {
+        max-width: 1920px;
+        padding: 0 138px;
+    }
+
+    .nav-group {
+        gap: 20px;
+    }
+
+    .product-section {
+        width: 622px;
+    }
+
+    .color-section {
+        width: 1002px;
+    }
+}
+
+/* 小型桌面显示器 (1280px - 1439px) */
+@media screen and (min-width: 1280px) and (max-width: 1439px) {
+    .container {
+        padding: 0 80px;
+    }
+
+    .nav-group {
+        gap: 15px;
+    }
+
+    .product-section {
+        width: 500px;
+    }
+
+    .color-section {
+        width: 800px;
+    }
+
+    .nav-items {
+        flex-wrap: wrap;
+    }
+}
+
+/* 笔记本电脑 (1024px - 1279px) */
+@media screen and (min-width: 1024px) and (max-width: 1279px) {
+    .container {
+        padding: 0 40px;
+    }
+
+    .nav-group {
+        gap: 15px;
+    }
+
+    .product-section {
+        width: 450px;
+    }
+
+    .color-section {
+        width: 700px;
+    }
+
+    .nav-items {
+        flex-wrap: wrap;
+    }
+}
+
+/* 平板设备 (768px - 1023px) */
+@media screen and (min-width: 768px) and (max-width: 1023px) {
+    .container {
+        padding: 0 20px;
+    }
+
+    .nav-group {
+        flex-direction: column;
+        height: auto;
+        gap: 15px;
+    }
+
+    .product-section,
+    .color-section {
+        width: 100%;
+        height: auto;
+        min-height: 120px;
+    }
+
+    .section-content {
+        padding: 15px;
+    }
+
+    .section-content::after {
+        top: 40px;
+    }
+
+    .image-container {
+        min-width: 100%;
+    }
+}
+
+/* 移动设备 (480px - 767px) */
+@media screen and (min-width: 480px) and (max-width: 767px) {
+    .container {
+        padding: 0 20px;
+    }
+
+    .nav-group {
+        flex-direction: column;
+        height: auto;
+        gap: 15px;
+    }
+
+    .product-section,
+    .color-section {
+        width: 100%;
+        height: auto;
+        min-height: 120px;
+    }
+
+    .section-content {
+        padding: 12px;
+    }
+
+    .section-content::after {
+        top: 38px;
+    }
+
+    .nav-items {
+        margin-top: 18px;
+    }
+}
+
+/* 小型移动设备 (479px 以下) */
+@media screen and (max-width: 479px) {
+    .container {
+        padding: 0 15px;
+    }
+
+    .nav-group {
+        flex-direction: column;
+        height: auto;
+        gap: 12px;
+    }
+
+    .product-section,
+    .color-section {
+        width: 100%;
+        height: auto;
+        min-height: 120px;
+    }
+
+    .section-content {
+        padding: 10px;
+    }
+
+    .section-content::after {
+        top: 35px;
+    }
+
+    .nav-items {
+        margin-top: 15px;
+        gap: 8px;
+    }
+
+    .nav-item {
+        font-size: 13px;
+    }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@media (hover: none) {
+    .nav-item:hover {
+        background: #F5F5F5;
+        color: var(--text-secondary);
+    }
+    
+    .image-container:hover {
+        transform: none;
+    }
+} 

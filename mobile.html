@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>实验室台面展示 - 移动端</title>
+    <link rel="stylesheet" href="mobile.css">
+</head>
+<body>
+    <div class="container">
+        <div class="nav-group">
+            <!-- 产品选择区域 -->
+            <div class="nav-section product-nav">
+                <div class="nav-header">
+                    <span class="nav-title">产品选择</span>
+                    <div class="nav-line"></div>
+                </div>
+                <div class="nav-content product-grid">
+                    <button class="nav-item active" data-product="flat">平板台面</button>
+                    <button class="nav-item" data-product="groove">单边凹槽阻水台面</button>
+                    <button class="nav-item" data-product="dish">碟型台面</button>
+                    <button class="nav-item" data-product="sink">碟型沥水槽台面</button>
+                </div>
+            </div>
+
+            <!-- 颜色选择区域 -->
+            <div class="nav-section color-nav">
+                <div class="nav-header">
+                    <span class="nav-title">颜色选择</span>
+                    <div class="nav-line"></div>
+                </div>
+                <div class="nav-content color-grid">
+                    <button class="nav-item active" data-color="amazon">亚马逊蓝</button>
+                    <button class="nav-item" data-color="black">睿智经典黑</button>
+                    <button class="nav-item" data-color="grey">博雅斑点灰</button>
+                    <button class="nav-item" data-color="purple">皇家紫罗兰</button>
+                    <button class="nav-item" data-color="agate">德国玛瑙灰</button>
+                    <button class="nav-item" data-color="orange">爱马仕橙</button>
+                    <button class="nav-item" data-color="green">罗马青瓷绿</button>
+                    <button class="nav-item" data-color="white">希腊沙滩白</button>
+                    <button class="nav-item" data-color="yellow">冬日暖意黄</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 图片预览区域 -->
+        <div class="preview-section">
+            <div class="image-container" data-view="front">
+                <img src="lab-image.jpg" alt="正视图" class="preview-image">
+                <div class="loading-indicator"></div>
+            </div>
+            <div class="image-container" data-view="side">
+                <img src="lab-image.jpg" alt="侧视图" class="preview-image">
+                <div class="loading-indicator"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图片预览模态框 -->
+    <div id="imageModal" class="modal">
+        <span class="close-button">&times;</span>
+        <img id="modalImage" src="" alt="预览图">
+    </div>
+
+    <script src="mobile.js"></script>
+</body>
+</html> 
