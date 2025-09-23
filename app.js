@@ -8,7 +8,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeButton = document.querySelector('.close-button');
 
     // 图片缓存对象
-    const imageCache = {};
+    const imageCache = new Map();
+    const preloadedImages = new Set();
 
     // 产品和颜色名称映射
     const productNames = {
@@ -79,17 +80,17 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('selectedColor', currentColor);
     }
 
-    // 检查图片是否存在
+    // 检查图片是否存在并缓存
     function checkImage(url) {
         return new Promise((resolve, reject) => {
-            if (imageCache[url]) {
-                resolve(url);
+            if (imageCache.has(url)) {
+                resolve(imageCache.get(url));
                 return;
             }
 
             const img = new Image();
             img.onload = () => {
-                imageCache[url] = true;
+                imageCache.set(url, url);
                 resolve(url);
             };
             img.onerror = () => {
@@ -97,6 +98,56 @@ document.addEventListener('DOMContentLoaded', function() {
             };
             img.src = url;
         });
+    }
+
+    // 预加载图片
+    function preloadImage(url) {
+        if (preloadedImages.has(url) || imageCache.has(url)) {
+            return Promise.resolve();
+        }
+
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+                imageCache.set(url, url);
+                preloadedImages.add(url);
+                resolve();
+            };
+            img.onerror = () => {
+                resolve(); // 即使失败也继续
+            };
+            img.src = url;
+        });
+    }
+
+    // 预加载产品的所有颜色图片
+    function preloadProductImages(product) {
+        const availableColors = productAvailableColors[product];
+        const productName = productNames[product];
+        
+        // 预加载常用颜色的图片
+        const priorityColors = ['amazon', 'black', 'grey']; // 优先预加载的颜色
+        const preloadPromises = [];
+        
+        availableColors.forEach(color => {
+            const colorName = colorNames[color];
+            const frontUrl = `images/${productName}-${colorName}.jpg`;
+            const sideUrl = `images/${productName}-${colorName}-侧视图.jpg`;
+            
+            // 优先颜色立即预加载，其他颜色延迟预加载
+            if (priorityColors.includes(color)) {
+                preloadPromises.push(preloadImage(frontUrl));
+                preloadPromises.push(preloadImage(sideUrl));
+            } else {
+                // 延迟预加载非优先颜色
+                setTimeout(() => {
+                    preloadImage(frontUrl);
+                    preloadImage(sideUrl);
+                }, 1000);
+            }
+        });
+        
+        return Promise.all(preloadPromises);
     }
 
     // 更新颜色按钮显示状态
@@ -142,6 +193,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     currentColor = defaultColor;
                     // 更新颜色按钮显示状态
                     updateColorButtons(currentProduct);
+                    // 预加载新产品的常用颜色图片
+                    preloadProductImages(currentProduct);
                 } else {
                     currentColor = item.dataset.color;
                 }
@@ -164,18 +217,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 更新图片函数
     async function updateImages() {
-        for (const container of imageContainers) {
+        const productName = productNames[currentProduct];
+        const colorName = colorNames[currentColor];
+        
+        // 并行处理所有图片容器，使用Promise.allSettled来处理可能的错误
+        const updatePromises = Array.from(imageContainers).map(async (container) => {
             const view = container.dataset.view;
             const img = container.querySelector('.preview-image');
             const currentSrc = img.src;
             
             // 构建图片URL，使用中文名称
-            const productName = productNames[currentProduct];
-            const colorName = colorNames[currentColor];
             const imageUrl = `images/${productName}-${colorName}${view === 'side' ? '-侧视图' : ''}.jpg`;
 
             // 如果新的URL与当前URL相同，则跳过
-            if (currentSrc.endsWith(imageUrl)) continue;
+            if (currentSrc.endsWith(imageUrl)) {
+                return { status: 'fulfilled', url: imageUrl };
+            }
 
             // 添加加载状态
             container.classList.add('loading');
@@ -183,19 +240,48 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 // 检查图片是否存在
                 await checkImage(imageUrl);
-                img.src = imageUrl;
-                container.classList.remove('loading');
-            } catch (error) {
-                console.log('图片不存在:', imageUrl);
-                // 如果是侧视图且加载失败，保持当前图片不变
-                if (view === 'side' && currentSrc && !currentSrc.endsWith('lab-image.jpg')) {
+                
+                // 如果图片已经缓存，立即显示
+                if (imageCache.has(imageUrl)) {
+                    img.src = imageUrl;
                     container.classList.remove('loading');
+                    return { status: 'fulfilled', url: imageUrl };
+                }
+                
+                // 创建新图片对象进行预加载
+                const newImg = new Image();
+                await new Promise((resolve, reject) => {
+                    newImg.onload = resolve;
+                    newImg.onerror = reject;
+                    newImg.src = imageUrl;
+                });
+                
+                // 预加载完成后更新显示
+                img.src = imageUrl;
+                return { status: 'fulfilled', url: imageUrl };
+                
+            } catch (error) {
+                console.log('图片加载失败:', imageUrl);
+                // 侧视图失败时保持当前图片，正视图失败时使用默认图片
+                if (view === 'side' && currentSrc && !currentSrc.endsWith('lab-image.jpg')) {
+                    // 保持当前图片不变
                 } else {
                     img.src = 'lab-image.jpg'; // 仅在必要时使用默认图片
-                    container.classList.remove('loading');
                 }
+                return { status: 'rejected', url: imageUrl, error };
+            } finally {
+                container.classList.remove('loading');
             }
-        }
+        });
+
+        const results = await Promise.allSettled(updatePromises);
+        
+        // 记录加载结果用于调试
+        results.forEach((result, index) => {
+            if (result.status === 'rejected') {
+                console.warn('图片加载失败:', result.reason);
+            }
+        });
     }
 
     // 图片点击放大
@@ -228,4 +314,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 初始化图片
     updateImages();
+    
+    // 初始化时预加载当前产品的图片
+    preloadProductImages(currentProduct);
 }); 
