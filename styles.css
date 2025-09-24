@@ -101,7 +101,6 @@ body {
     gap: 9px;
     width: 100%;
     flex-wrap: wrap;
-    justify-content: space-between;
 }
 
 .nav-item {
