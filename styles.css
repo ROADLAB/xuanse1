@@ -274,7 +274,7 @@ body {
 }
 
 /* 响应式布局 */
-/* 大屏幕 (1920px 以上) */
+/* 大屏幕 (1920px 以上) - 2K/4K分辨率优化 */
 @media screen and (min-width: 1921px) {
     .container {
         max-width: 2560px;
@@ -286,11 +286,25 @@ body {
     }
 
     .product-section {
-        width: 800px;
+        width: 900px;
     }
 
     .color-section {
-        width: 1200px;
+        width: 1100px;
+    }
+    
+    /* 2K分辨率下优化按钮尺寸，充分利用空间 */
+    .product-section .nav-item {
+        width: 200px;
+    }
+    
+    .product-section .nav-item[data-product="bidirectional"],
+    .product-section .nav-item[data-product="face_to_face"] {
+        width: 409px; /* 200*2 + 9 */
+    }
+    
+    .color-section .nav-item {
+        width: 110px;
     }
 }
 
