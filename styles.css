@@ -48,18 +48,18 @@ body {
 }
 
 .product-section {
-    width: 684px;
+    width: 769px;
     min-height: 120px;
-    flex: 1 1 684px;
+    flex: 1 1 769px;
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     overflow: hidden;
 }
 
 .color-section {
-    width: 940px;
+    width: 855px;
     min-height: 120px;
-    flex: 1 1 940px;
+    flex: 1 1 855px;
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     overflow: hidden;
@@ -134,9 +134,9 @@ body {
     white-space: nowrap;
 }
 
-/* 双向导流防滑沥水槽台面特殊宽度 */
+/* 双向导流防滑沥水槽台面特殊宽度 - 等于两个标准按钮+间距的总长度 */
 .product-section .nav-item[data-product="bidirectional"] {
-    width: 200px;
+    width: 285px;
 }
 
 .nav-item:hover {
