@@ -126,10 +126,11 @@ body {
     padding: 0;
 }
 
-/* 产品选择按钮尺寸 - 现实计算：第一行4个按钮平均分布
-   可用宽度729px - 3个间距27px = 702px ÷ 4个按钮 = 175.5px ≈ 176px */
+/* 产品选择按钮尺寸 - 精确计算确保第一行4个按钮
+   可用宽度729px，减去安全边距，每个按钮170px
+   4个按钮×170px + 3个间距×9px = 680px + 27px = 707px < 729px */
 .product-section .nav-item {
-    width: 176px;
+    width: 170px;
     padding: 0;
     height: 42px;
     white-space: nowrap;
