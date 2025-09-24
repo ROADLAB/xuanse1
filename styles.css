@@ -126,12 +126,19 @@ body {
     padding: 0;
 }
 
-/* 产品选择按钮尺寸 - 数学计算：(729px可用宽度 - 36px间距) ÷ 5个按钮 = 138.6px */
+/* 产品选择按钮尺寸 - 现实计算：第一行4个按钮平均分布
+   可用宽度729px - 3个间距27px = 702px ÷ 4个按钮 = 175.5px ≈ 176px */
 .product-section .nav-item {
-    width: 139px;
+    width: 176px;
     padding: 0;
     height: 42px;
     white-space: nowrap;
+}
+
+/* 双向导流防滑沥水槽台面 - 换行后单独占据第二行 */
+.product-section .nav-item[data-product="bidirectional"] {
+    width: 100%;
+    max-width: 400px;
 }
 
 .nav-item:hover {
