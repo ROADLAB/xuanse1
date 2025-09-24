@@ -306,18 +306,18 @@ body {
     }
 
     .product-section {
-        width: 622px;
+        width: 769px;
     }
 
     .color-section {
-        width: 1002px;
+        width: 855px;
     }
 }
 
 /* 小型桌面显示器 (1280px - 1439px) */
 @media screen and (min-width: 1280px) and (max-width: 1439px) {
     .container {
-        padding: 0 80px;
+        padding: 0 60px;
     }
 
     .nav-group {
@@ -325,15 +325,25 @@ body {
     }
 
     .product-section {
-        width: 500px;
+        width: 600px;
     }
 
     .color-section {
-        width: 800px;
+        width: 650px;
     }
-
-    .nav-items {
-        flex-wrap: wrap;
+    
+    /* 调整按钮尺寸保持比例 */
+    .product-section .nav-item {
+        width: 140px;
+    }
+    
+    .product-section .nav-item[data-product="bidirectional"],
+    .product-section .nav-item[data-product="face_to_face"] {
+        width: 289px;
+    }
+    
+    .color-section .nav-item {
+        width: 85px;
     }
 }
 
@@ -348,15 +358,25 @@ body {
     }
 
     .product-section {
-        width: 450px;
+        width: 500px;
     }
 
     .color-section {
-        width: 700px;
+        width: 450px;
     }
-
-    .nav-items {
-        flex-wrap: wrap;
+    
+    /* 调整按钮尺寸保持比例 */
+    .product-section .nav-item {
+        width: 115px;
+    }
+    
+    .product-section .nav-item[data-product="bidirectional"],
+    .product-section .nav-item[data-product="face_to_face"] {
+        width: 239px;
+    }
+    
+    .color-section .nav-item {
+        width: 70px;
     }
 }
 
@@ -385,6 +405,20 @@ body {
 
     .section-content::after {
         top: 40px;
+    }
+    
+    /* 调整按钮尺寸保持比例 */
+    .product-section .nav-item {
+        width: 150px;
+    }
+    
+    .product-section .nav-item[data-product="bidirectional"],
+    .product-section .nav-item[data-product="face_to_face"] {
+        width: 309px;
+    }
+    
+    .color-section .nav-item {
+        width: 90px;
     }
 
     .image-container {
