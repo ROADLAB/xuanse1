@@ -73,22 +73,36 @@ body {
 
 /* 按钮样式 */
 .nav-item {
-    height: 28px;
+    min-height: 28px;
+    height: auto;
     background: #F5F5F5;
     border: none;
     border-radius: 2px;
     font-size: 13px;
     color: #666666;
     cursor: pointer;
-    padding: 0 6px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    padding: 4px 6px;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
+    word-break: break-word;
+    line-height: 1.2;
+}
+
+/* 产品按钮允许换行 */
+.product-grid .nav-item {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+}
+
+/* 颜色按钮保持单行 */
+.color-grid .nav-item {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .nav-item.active {
