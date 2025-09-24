@@ -45,6 +45,7 @@ body {
     display: flex;
     gap: 20px;
     min-height: 120px;
+    justify-content: center; /* 默认居中对齐 */
 }
 
 .product-section {
@@ -274,6 +275,41 @@ body {
 }
 
 /* 响应式布局 */
+/* 2560*1440p 分辨率专门优化 - 减少右侧留白 */
+@media screen and (width: 2560px) and (height: 1440px) {
+    .container {
+        max-width: 2560px;
+        padding: 0 120px; /* 减少左右边距 */
+    }
+
+    .nav-group {
+        gap: 25px;
+        justify-content: flex-start; /* 左对齐减少右侧留白 */
+    }
+
+    .product-section {
+        width: 1100px; /* 增加产品选择区域宽度 */
+    }
+
+    .color-section {
+        width: 1100px; /* 调整颜色选择区域宽度保持对称 */
+    }
+    
+    /* 优化按钮尺寸，更好地利用增加的宽度 */
+    .product-section .nav-item {
+        width: 220px; /* 增大按钮宽度 */
+    }
+    
+    .product-section .nav-item[data-product="bidirectional"],
+    .product-section .nav-item[data-product="face_to_face"] {
+        width: 449px; /* 220*2 + 9 */
+    }
+    
+    .color-section .nav-item {
+        width: 115px; /* 相应调整颜色按钮宽度 */
+    }
+}
+
 /* 大屏幕 (1920px 以上) - 2K/4K分辨率优化 */
 @media screen and (min-width: 1921px) {
     .container {
