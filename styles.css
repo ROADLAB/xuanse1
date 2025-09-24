@@ -129,7 +129,7 @@ body {
 
 /* 产品选择按钮尺寸 */
 .product-section .nav-item {
-    width: 138px;
+    width: 155px;
     padding: 0;
     height: 42px;
     white-space: nowrap;
@@ -137,7 +137,7 @@ body {
 
 /* 双向导流防滑沥水槽台面特殊宽度 - 等于两个标准按钮+间距的总长度 */
 .product-section .nav-item[data-product="bidirectional"] {
-    width: 285px;
+    width: 319px;
 }
 
 .nav-item:hover {
