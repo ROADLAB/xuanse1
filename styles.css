@@ -136,10 +136,9 @@ body {
     white-space: nowrap;
 }
 
-/* 双向导流防滑沥水槽台面 - 换行后单独占据第二行 */
+/* 双向导流防滑沥水槽台面 - 等于两个标准按钮的总长度 */
 .product-section .nav-item[data-product="bidirectional"] {
-    width: 100%;
-    max-width: 400px;
+    width: 349px;
 }
 
 .nav-item:hover {
