@@ -838,3 +838,13 @@ body {
     color: #0c5460;
     border-color: #bee5eb;
 }
+
+/* 按钮加载状态 */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn .fa-spin {
+    animation: spin 1s linear infinite;
+}

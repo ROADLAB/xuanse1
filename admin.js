@@ -249,6 +249,12 @@ class AdminSystem {
         if (resetFavicon) {
             resetFavicon.addEventListener('click', () => this.resetFavicon());
         }
+
+        // 保存设置按钮
+        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+        if (saveSettingsBtn) {
+            saveSettingsBtn.addEventListener('click', () => this.saveSettings());
+        }
     }
 
     // 检查登录状态
@@ -265,20 +271,56 @@ class AdminSystem {
     // 处理登录
     handleLogin(e) {
         e.preventDefault();
-        const username = document.getElementById('username').value;
+        const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value;
 
-        // 简单的登录验证（实际项目中应该使用后端验证）
-        if (username === 'admin' && password === '123456') {
-            this.currentUser = {
-                id: 1,
-                username: 'admin',
-                loginTime: new Date().toISOString()
-            };
-            localStorage.setItem('adminUser', JSON.stringify(this.currentUser));
-            this.showAdminPanel();
-        } else {
-            this.showAlert('用户名或密码错误', 'error');
+        // 表单验证
+        if (!username || !password) {
+            this.showAlert('请输入用户名和密码', 'warning');
+            return;
+        }
+
+        // 显示登录中状态
+        const loginBtn = e.target.querySelector('button[type="submit"]');
+        if (loginBtn) {
+            const originalContent = loginBtn.innerHTML;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 登录中...';
+            loginBtn.disabled = true;
+            
+            // 模拟登录延迟
+            setTimeout(() => {
+                // 简单的登录验证（实际项目中应该使用后端验证）
+                if (username === 'admin' && password === '123456') {
+                    this.currentUser = {
+                        id: 1,
+                        username: 'admin',
+                        loginTime: new Date().toISOString()
+                    };
+                    localStorage.setItem('adminUser', JSON.stringify(this.currentUser));
+                    
+                    // 恢复按钮状态
+                    loginBtn.innerHTML = originalContent;
+                    loginBtn.disabled = false;
+                    
+                    // 显示成功消息并跳转
+                    this.showAlert('登录成功！正在进入管理后台...', 'success');
+                    
+                    setTimeout(() => {
+                        this.showAdminPanel();
+                    }, 1000);
+                    
+                } else {
+                    // 恢复按钮状态
+                    loginBtn.innerHTML = originalContent;
+                    loginBtn.disabled = false;
+                    
+                    this.showAlert('用户名或密码错误，请检查后重试', 'error');
+                    
+                    // 清空密码字段
+                    document.getElementById('password').value = '';
+                    document.getElementById('password').focus();
+                }
+            }, 1200); // 1.2秒延迟，模拟服务器验证
         }
     }
 
@@ -835,16 +877,28 @@ class AdminSystem {
 
     // 删除产品
     deleteProduct(productId) {
-        if (!confirm('确定要删除这个产品吗？')) return;
+        if (!confirm('确定要删除这个产品吗？此操作不可撤销。')) return;
 
-        const products = JSON.parse(localStorage.getItem('adminProducts')) || [];
-        const filteredProducts = products.filter(p => p.id !== productId);
-        
-        localStorage.setItem('adminProducts', JSON.stringify(filteredProducts));
-        
-        this.loadProducts();
-        this.loadDashboard();
-        this.showAlert('产品删除成功', 'success');
+        try {
+            const products = JSON.parse(localStorage.getItem('adminProducts')) || [];
+            const productToDelete = products.find(p => p.id === productId);
+            
+            if (!productToDelete) {
+                this.showAlert('产品不存在', 'error');
+                return;
+            }
+
+            const filteredProducts = products.filter(p => p.id !== productId);
+            localStorage.setItem('adminProducts', JSON.stringify(filteredProducts));
+            
+            this.loadProducts();
+            this.loadDashboard();
+            this.loadImages(); // 更新图片列表，因为产品删除了
+            
+            this.showAlert(`产品"${productToDelete.name}"删除成功`, 'success');
+        } catch (error) {
+            this.showAlert('删除产品失败: ' + error.message, 'error');
+        }
     }
 
     // 编辑颜色
@@ -916,16 +970,50 @@ class AdminSystem {
 
     // 删除颜色
     deleteColor(colorId) {
-        if (!confirm('确定要删除这个颜色吗？')) return;
+        if (!confirm('确定要删除这个颜色吗？此操作不可撤销，使用该颜色的产品将受到影响。')) return;
 
-        const colors = JSON.parse(localStorage.getItem('adminColors')) || [];
-        const filteredColors = colors.filter(c => c.id !== colorId);
-        
-        localStorage.setItem('adminColors', JSON.stringify(filteredColors));
-        
-        this.loadColors();
-        this.loadDashboard();
-        this.showAlert('颜色删除成功', 'success');
+        try {
+            const colors = JSON.parse(localStorage.getItem('adminColors')) || [];
+            const colorToDelete = colors.find(c => c.id === colorId);
+            
+            if (!colorToDelete) {
+                this.showAlert('颜色不存在', 'error');
+                return;
+            }
+
+            // 检查是否有产品在使用这个颜色
+            const products = JSON.parse(localStorage.getItem('adminProducts')) || [];
+            const usingProducts = products.filter(product => 
+                product.colors && product.colors.includes(colorId)
+            );
+
+            if (usingProducts.length > 0) {
+                const productNames = usingProducts.map(p => p.name).join('、');
+                if (!confirm(`警告：颜色"${colorToDelete.name}"正在被以下产品使用：${productNames}。删除后这些产品将无法显示该颜色。确定要继续吗？`)) {
+                    return;
+                }
+                
+                // 从产品中移除这个颜色
+                products.forEach(product => {
+                    if (product.colors && product.colors.includes(colorId)) {
+                        product.colors = product.colors.filter(c => c !== colorId);
+                    }
+                });
+                localStorage.setItem('adminProducts', JSON.stringify(products));
+            }
+
+            const filteredColors = colors.filter(c => c.id !== colorId);
+            localStorage.setItem('adminColors', JSON.stringify(filteredColors));
+            
+            this.loadColors();
+            this.loadDashboard();
+            this.loadProducts(); // 重新加载产品列表
+            this.loadImages(); // 更新图片列表
+            
+            this.showAlert(`颜色"${colorToDelete.name}"删除成功`, 'success');
+        } catch (error) {
+            this.showAlert('删除颜色失败: ' + error.message, 'error');
+        }
     }
 
     // 预览图片
@@ -1265,23 +1353,138 @@ class AdminSystem {
         }, 100);
     }
 
+    // 保存设置
+    saveSettings() {
+        try {
+            // 显示加载状态
+            const saveBtn = document.getElementById('saveSettingsBtn');
+            if (saveBtn) {
+                const originalContent = saveBtn.innerHTML;
+                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 保存中...';
+                saveBtn.disabled = true;
+                
+                // 模拟保存延迟，让用户看到加载状态
+                setTimeout(() => {
+                    try {
+                        // 获取表单数据
+                        const siteTitle = document.getElementById('siteTitle').value.trim();
+                        const siteDescription = document.getElementById('siteDescription').value.trim();
+                        const autoSave = document.getElementById('autoSave').checked;
+                        const imagePreload = document.getElementById('imagePreload').checked;
+
+                        // 验证数据
+                        if (!siteTitle) {
+                            throw new Error('网站标题不能为空');
+                        }
+
+                        if (!siteDescription) {
+                            throw new Error('网站描述不能为空');
+                        }
+
+                        if (siteTitle.length > 100) {
+                            throw new Error('网站标题不能超过100个字符');
+                        }
+
+                        if (siteDescription.length > 500) {
+                            throw new Error('网站描述不能超过500个字符');
+                        }
+
+                        // 保存数据到localStorage
+                        const settings = {
+                            siteTitle: siteTitle,
+                            siteDescription: siteDescription,
+                            autoSave: autoSave,
+                            imagePreload: imagePreload,
+                            favicon: localStorage.getItem('adminFavicon') || 'favicon.svg',
+                            visitCount: JSON.parse(localStorage.getItem('adminSettings') || '{}').visitCount || 0,
+                            lastModified: new Date().toISOString()
+                        };
+
+                        localStorage.setItem('adminSettings', JSON.stringify(settings));
+
+                        // 恢复按钮状态
+                        saveBtn.innerHTML = originalContent;
+                        saveBtn.disabled = false;
+
+                        // 显示成功提示
+                        this.showAlert('设置保存成功！', 'success');
+
+                        // 更新页面标题（如果当前页面是管理后台）
+                        if (document.title.includes('管理后台')) {
+                            document.title = `管理后台 - ${siteTitle}`;
+                        }
+
+                    } catch (error) {
+                        // 恢复按钮状态
+                        saveBtn.innerHTML = originalContent;
+                        saveBtn.disabled = false;
+
+                        // 显示错误提示
+                        this.showAlert(error.message || '保存设置时发生错误', 'error');
+                    }
+                }, 800); // 800ms延迟，让用户看到保存中状态
+            }
+
+        } catch (error) {
+            this.showAlert('保存设置失败: ' + error.message, 'error');
+        }
+    }
+
     // 显示提示信息
     showAlert(message, type = 'info') {
         const alert = document.createElement('div');
         alert.className = `alert alert-${type}`;
         alert.textContent = message;
         
-        // 插入到页面顶部
-        const content = document.querySelector('.content');
-        if (content) {
-            content.insertBefore(alert, content.firstChild);
+        // 确定插入位置
+        let container = document.querySelector('.content');
+        
+        // 如果在登录页面，使用登录容器
+        if (!container) {
+            const loginBox = document.querySelector('.login-box');
+            if (loginBox) {
+                container = loginBox;
+            } else {
+                container = document.body;
+            }
+        }
+        
+        if (container) {
+            // 如果是登录页面，插入到登录表单前面
+            if (container.classList.contains('login-box')) {
+                const loginForm = container.querySelector('.login-form');
+                if (loginForm) {
+                    container.insertBefore(alert, loginForm);
+                } else {
+                    container.appendChild(alert);
+                }
+            } else {
+                // 管理后台页面，插入到顶部
+                container.insertBefore(alert, container.firstChild);
+            }
             
-            // 3秒后自动消失
+            // 添加淡入动画
+            alert.style.opacity = '0';
+            alert.style.transform = 'translateY(-10px)';
+            alert.style.transition = 'all 0.3s ease';
+            
+            setTimeout(() => {
+                alert.style.opacity = '1';
+                alert.style.transform = 'translateY(0)';
+            }, 10);
+            
+            // 3.5秒后自动消失
             setTimeout(() => {
                 if (alert.parentNode) {
-                    alert.parentNode.removeChild(alert);
+                    alert.style.opacity = '0';
+                    alert.style.transform = 'translateY(-10px)';
+                    setTimeout(() => {
+                        if (alert.parentNode) {
+                            alert.parentNode.removeChild(alert);
+                        }
+                    }, 300);
                 }
-            }, 3000);
+            }, 3500);
         }
     }
 }
