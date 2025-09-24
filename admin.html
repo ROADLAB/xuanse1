@@ -6,6 +6,11 @@
     <meta name="description" content="榕德实验室台面管理后台">
     <title>管理后台 - 榕德实验室台面</title>
     
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" id="favicon-link">
+    <link rel="icon" type="image/x-icon" href="favicon.ico" id="favicon-fallback">
+    <link rel="apple-touch-icon" href="favicon.svg" id="favicon-apple">
+    
     <!-- 预加载关键资源 -->
     <link rel="preload" href="admin.css" as="style">
     <link rel="preload" href="admin.js" as="script">
@@ -285,6 +290,30 @@
                             <div class="form-group">
                                 <label for="siteDescription">网站描述</label>
                                 <textarea id="siteDescription" rows="3">实验室台面产品展示与颜色选择</textarea>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h3>网站图标</h3>
+                            <div class="form-group">
+                                <label>当前网站图标</label>
+                                <div class="favicon-preview">
+                                    <img id="faviconPreview" src="favicon.svg" alt="网站图标" style="width: 32px; height: 32px;">
+                                    <span>32x32 像素</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="faviconUpload">上传新图标</label>
+                                <input type="file" id="faviconUpload" accept="image/*">
+                                <small style="color: var(--text-muted); display: block; margin-top: 5px;">
+                                    支持 SVG、PNG、ICO 格式，推荐尺寸：32x32 或 16x16 像素
+                                </small>
+                            </div>
+                            <div class="form-group">
+                                <button type="button" class="btn btn-secondary" id="resetFavicon">
+                                    <i class="fas fa-undo"></i>
+                                    恢复默认图标
+                                </button>
                             </div>
                         </div>
 

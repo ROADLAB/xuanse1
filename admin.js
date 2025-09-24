@@ -153,9 +153,15 @@ class AdminSystem {
                 siteDescription: '实验室台面产品展示与颜色选择',
                 autoSave: true,
                 imagePreload: true,
-                visitCount: 1234
+                visitCount: 1234,
+                favicon: 'favicon.svg' // 默认favicon
             };
             localStorage.setItem('adminSettings', JSON.stringify(defaultSettings));
+        }
+
+        // Favicon数据
+        if (!localStorage.getItem('adminFavicon')) {
+            localStorage.setItem('adminFavicon', 'favicon.svg');
         }
     }
 
@@ -230,6 +236,18 @@ class AdminSystem {
                     this.hideModal();
                 }
             });
+        }
+
+        // Favicon 相关事件
+        const faviconUpload = document.getElementById('faviconUpload');
+        const resetFavicon = document.getElementById('resetFavicon');
+
+        if (faviconUpload) {
+            faviconUpload.addEventListener('change', (e) => this.handleFaviconUpload(e));
+        }
+
+        if (resetFavicon) {
+            resetFavicon.addEventListener('click', () => this.resetFavicon());
         }
     }
 
@@ -500,11 +518,18 @@ class AdminSystem {
     // 加载设置
     loadSettings() {
         const settings = JSON.parse(localStorage.getItem('adminSettings')) || {};
+        const currentFavicon = localStorage.getItem('adminFavicon') || 'favicon.svg';
         
         document.getElementById('siteTitle').value = settings.siteTitle || '';
         document.getElementById('siteDescription').value = settings.siteDescription || '';
         document.getElementById('autoSave').checked = settings.autoSave || false;
         document.getElementById('imagePreload').checked = settings.imagePreload || false;
+
+        // 更新favicon预览
+        const faviconPreview = document.getElementById('faviconPreview');
+        if (faviconPreview) {
+            faviconPreview.src = currentFavicon;
+        }
     }
 
     // 显示添加产品模态框
@@ -1088,6 +1113,156 @@ class AdminSystem {
         } catch (error) {
             errorCallback('文件处理失败: ' + error.message);
         }
+    }
+
+    // 处理favicon上传
+    handleFaviconUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // 检查文件类型
+        const allowedTypes = ['image/png', 'image/x-icon', 'image/svg+xml', 'image/jpeg', 'image/gif'];
+        if (!allowedTypes.includes(file.type)) {
+            this.showAlert('请选择 PNG、ICO、SVG、JPG 或 GIF 格式的图标文件', 'error');
+            event.target.value = '';
+            return;
+        }
+
+        // 检查文件大小（限制1MB）
+        if (file.size > 1024 * 1024) {
+            this.showAlert('图标文件大小不能超过1MB', 'error');
+            event.target.value = '';
+            return;
+        }
+
+        // 处理文件
+        this.processFaviconFile(file, (base64Data) => {
+            // 保存favicon
+            localStorage.setItem('adminFavicon', base64Data);
+            
+            // 更新预览
+            const faviconPreview = document.getElementById('faviconPreview');
+            if (faviconPreview) {
+                faviconPreview.src = base64Data;
+            }
+            
+            // 更新页面favicon
+            this.updatePageFavicon(base64Data);
+            
+            this.showAlert('网站图标更新成功', 'success');
+            
+            // 清空文件输入
+            event.target.value = '';
+        }, (error) => {
+            this.showAlert('图标处理失败: ' + error, 'error');
+            event.target.value = '';
+        });
+    }
+
+    // 处理favicon文件
+    processFaviconFile(file, successCallback, errorCallback) {
+        try {
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                try {
+                    // 如果是SVG文件，直接使用
+                    if (file.type === 'image/svg+xml') {
+                        successCallback(e.target.result);
+                        return;
+                    }
+                    
+                    // 对于其他格式，创建图片进行处理
+                    const img = new Image();
+                    img.onload = () => {
+                        try {
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            
+                            // 设置canvas尺寸为32x32
+                            canvas.width = 32;
+                            canvas.height = 32;
+                            
+                            // 绘制图片
+                            ctx.drawImage(img, 0, 0, 32, 32);
+                            
+                            // 转换为base64
+                            const base64Data = canvas.toDataURL('image/png', 0.9);
+                            successCallback(base64Data);
+                            
+                        } catch (error) {
+                            errorCallback('图标处理失败: ' + error.message);
+                        }
+                    };
+                    
+                    img.onerror = () => {
+                        errorCallback('无法加载图标文件');
+                    };
+                    
+                    img.src = e.target.result;
+                    
+                } catch (error) {
+                    errorCallback('读取图标数据失败: ' + error.message);
+                }
+            };
+            
+            reader.onerror = () => {
+                errorCallback('文件读取失败');
+            };
+            
+            reader.readAsDataURL(file);
+            
+        } catch (error) {
+            errorCallback('文件处理失败: ' + error.message);
+        }
+    }
+
+    // 重置favicon到默认
+    resetFavicon() {
+        if (!confirm('确定要重置网站图标到默认状态吗？')) return;
+
+        const defaultFavicon = 'favicon.svg';
+        
+        // 重置存储
+        localStorage.setItem('adminFavicon', defaultFavicon);
+        
+        // 更新预览
+        const faviconPreview = document.getElementById('faviconPreview');
+        if (faviconPreview) {
+            faviconPreview.src = defaultFavicon;
+        }
+        
+        // 更新页面favicon
+        this.updatePageFavicon(defaultFavicon);
+        
+        this.showAlert('网站图标已重置到默认状态', 'success');
+    }
+
+    // 更新页面favicon
+    updatePageFavicon(faviconUrl) {
+        // 更新当前页面的favicon
+        const faviconLinks = [
+            document.getElementById('favicon-link'),
+            document.getElementById('favicon-fallback'),
+            document.getElementById('favicon-apple')
+        ];
+
+        faviconLinks.forEach(link => {
+            if (link) {
+                link.href = faviconUrl;
+            }
+        });
+
+        // 为了确保favicon立即更新，强制浏览器重新加载
+        setTimeout(() => {
+            faviconLinks.forEach(link => {
+                if (link && link.parentNode) {
+                    const newLink = link.cloneNode();
+                    newLink.href = faviconUrl + '?v=' + Date.now();
+                    link.parentNode.replaceChild(newLink, link);
+                }
+            });
+        }, 100);
     }
 
     // 显示提示信息

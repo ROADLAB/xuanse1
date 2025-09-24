@@ -341,4 +341,25 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 初始化时预加载当前产品的图片
     preloadProductImages(currentProduct);
+
+    // 加载自定义favicon（如果有的话）
+    function loadCustomFavicon() {
+        const customFavicon = localStorage.getItem('adminFavicon');
+        if (customFavicon && customFavicon !== 'favicon.svg') {
+            const faviconLinks = [
+                document.getElementById('favicon-link'),
+                document.getElementById('favicon-fallback'),
+                document.getElementById('favicon-apple')
+            ];
+
+            faviconLinks.forEach(link => {
+                if (link) {
+                    link.href = customFavicon;
+                }
+            });
+        }
+    }
+
+    // 加载自定义favicon
+    loadCustomFavicon();
 }); 

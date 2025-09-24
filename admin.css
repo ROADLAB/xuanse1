@@ -639,6 +639,30 @@ body {
     margin-right: 8px;
 }
 
+/* Favicon 预览样式 */
+.favicon-preview {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 2px dashed var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--bg-light);
+    margin-bottom: 15px;
+}
+
+.favicon-preview img {
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: white;
+    padding: 4px;
+}
+
+.favicon-preview span {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
 /* 模态框 */
 .modal {
     display: none;
