@@ -62,6 +62,7 @@ body {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
+    justify-items: stretch;
 }
 
 /* 颜色选择网格布局 */
