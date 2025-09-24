@@ -263,10 +263,10 @@ document.addEventListener('DOMContentLoaded', function() {
             } catch (error) {
                 console.log('图片加载失败:', imageUrl);
                 // 侧视图失败时保持当前图片，正视图失败时使用默认图片
-                if (view === 'side' && currentSrc && !currentSrc.endsWith('lab-image.jpg')) {
+                if (view === 'side' && currentSrc && !currentSrc.includes('images/')) {
                     // 保持当前图片不变
                 } else {
-                    img.src = 'lab-image.jpg'; // 仅在必要时使用默认图片
+                    img.src = 'images/平板台面-亚马逊蓝' + (view === 'side' ? '-侧视图' : '') + '.jpg'; // 使用默认图片
                 }
                 return { status: 'rejected', url: imageUrl, error };
             } finally {
