@@ -11,30 +11,26 @@
             "src": "/.*\\.css",
             "headers": {
                 "Content-Type": "text/css",
-                "Cache-Control": "public, max-age=604800, immutable",
-                "Content-Encoding": "gzip"
+                "Cache-Control": "public, max-age=604800"
             }
         },
         {
             "src": "/.*\\.js",
             "headers": {
                 "Content-Type": "application/javascript",
-                "Cache-Control": "public, max-age=604800, immutable",
-                "Content-Encoding": "gzip"
+                "Cache-Control": "public, max-age=604800"
             }
         },
         {
             "src": "/.*\\.(jpg|jpeg|png|gif|webp)",
             "headers": {
-                "Cache-Control": "public, max-age=2592000, immutable",
-                "Content-Encoding": "gzip"
+                "Cache-Control": "public, max-age=2592000"
             }
         },
         {
             "src": "/.*\\.(html|htm)",
             "headers": {
-                "Cache-Control": "public, max-age=3600",
-                "Content-Encoding": "gzip"
+                "Cache-Control": "public, max-age=3600"
             }
         },
         {
