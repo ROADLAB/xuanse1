@@ -17,7 +17,8 @@ document.addEventListener('DOMContentLoaded', function() {
         'groove': '单边凹槽阻水台面',
         'dish': '碟型台面',
         'sink': '碟型沥水槽台面',
-        'bidirectional': '双向导流防滑沥水槽台面'
+        'bidirectional': '肩并肩双向导流防滑沥水槽台面',
+        'face_to_face': '面对面双向导流防滑沥水槽台面'
     };
 
     const colorNames = {
@@ -38,7 +39,8 @@ document.addEventListener('DOMContentLoaded', function() {
         'groove': ['amazon', 'black', 'grey', 'purple', 'agate', 'green', 'white'],
         'dish': ['amazon', 'black', 'grey', 'purple', 'agate', 'orange', 'green', 'white', 'yellow'],
         'sink': ['amazon', 'black', 'grey', 'purple', 'agate', 'green', 'white', 'yellow'],
-        'bidirectional': ['amazon', 'grey']
+        'bidirectional': ['amazon', 'grey'],
+        'face_to_face': ['amazon', 'grey']
     };
 
     // 默认颜色

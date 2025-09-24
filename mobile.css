@@ -92,8 +92,9 @@ body {
     text-align: center;
 }
 
-/* 双向导流防滑沥水槽台面在移动端跨两列 */
-.nav-item[data-product="bidirectional"] {
+/* 长产品按钮在移动端跨两列 */
+.nav-item[data-product="bidirectional"],
+.nav-item[data-product="face_to_face"] {
     grid-column: 1 / -1;
     font-size: 12px;
 }

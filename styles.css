@@ -136,8 +136,9 @@ body {
     white-space: nowrap;
 }
 
-/* 双向导流防滑沥水槽台面 - 等于两个标准按钮的总长度 */
-.product-section .nav-item[data-product="bidirectional"] {
+/* 长产品按钮 - 等于两个标准按钮的总长度 */
+.product-section .nav-item[data-product="bidirectional"],
+.product-section .nav-item[data-product="face_to_face"] {
     width: 349px;
 }
 
