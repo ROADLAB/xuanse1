@@ -126,17 +126,12 @@ body {
     padding: 0;
 }
 
-/* 产品选择按钮尺寸 */
+/* 产品选择按钮尺寸 - 数学计算：(729px可用宽度 - 36px间距) ÷ 5个按钮 = 138.6px */
 .product-section .nav-item {
-    width: 155px;
+    width: 139px;
     padding: 0;
     height: 42px;
     white-space: nowrap;
-}
-
-/* 双向导流防滑沥水槽台面特殊宽度 - 等于两个标准按钮+间距的总长度 */
-.product-section .nav-item[data-product="bidirectional"] {
-    width: 319px;
 }
 
 .nav-item:hover {
