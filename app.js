@@ -227,13 +227,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const currentSrc = img.src;
             
             // 构建图片URL，使用中文名称
-            // 碟型台面没有侧视图，只显示正视图
-            let imageUrl;
-            if (currentProduct === 'dish' && view === 'side') {
-                imageUrl = `images/${productName}-${colorName}.jpg`; // 碟型台面侧视图使用正视图
-            } else {
-                imageUrl = `images/${productName}-${colorName}${view === 'side' ? '-侧视图' : ''}.jpg`;
-            }
+            const imageUrl = `images/${productName}-${colorName}${view === 'side' ? '-侧视图' : ''}.jpg`;
 
             // 如果新的URL与当前URL相同，则跳过
             if (currentSrc.endsWith(imageUrl)) {
