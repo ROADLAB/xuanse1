@@ -16,6 +16,11 @@ class AdminSystem {
 
     // 初始化默认数据
     initializeData() {
+        // 图片数据 - 存储自定义上传的图片
+        if (!localStorage.getItem('adminImages')) {
+            localStorage.setItem('adminImages', JSON.stringify({}));
+        }
+
         // 产品数据
         if (!localStorage.getItem('adminProducts')) {
             const defaultProducts = [
@@ -389,6 +394,7 @@ class AdminSystem {
     loadImages() {
         const products = JSON.parse(localStorage.getItem('adminProducts')) || [];
         const colors = JSON.parse(localStorage.getItem('adminColors')) || [];
+        const customImages = JSON.parse(localStorage.getItem('adminImages')) || {};
         const container = document.getElementById('imagesGrid');
         
         const colorMap = {};
@@ -400,35 +406,53 @@ class AdminSystem {
         products.forEach(product => {
             product.colors.forEach(colorCode => {
                 const colorName = colorMap[colorCode] || colorCode;
+                
+                // 正视图
+                const frontImageId = `${product.code}-${colorCode}-front`;
+                const frontImagePath = customImages[frontImageId] || `images/${product.name}-${colorName}.jpg`;
                 images.push({
-                    id: `${product.code}-${colorCode}-front`,
+                    id: frontImageId,
+                    productCode: product.code,
                     productName: product.name,
+                    colorCode: colorCode,
                     colorName: colorName,
                     type: '正视图',
                     filename: `${product.name}-${colorName}.jpg`,
-                    path: `images/${product.name}-${colorName}.jpg`
+                    path: frontImagePath,
+                    isCustom: !!customImages[frontImageId]
                 });
+                
+                // 侧视图
+                const sideImageId = `${product.code}-${colorCode}-side`;
+                const sideImagePath = customImages[sideImageId] || `images/${product.name}-${colorName}-侧视图.jpg`;
                 images.push({
-                    id: `${product.code}-${colorCode}-side`,
+                    id: sideImageId,
+                    productCode: product.code,
                     productName: product.name,
+                    colorCode: colorCode,
                     colorName: colorName,
                     type: '侧视图',
                     filename: `${product.name}-${colorName}-侧视图.jpg`,
-                    path: `images/${product.name}-${colorName}-侧视图.jpg`
+                    path: sideImagePath,
+                    isCustom: !!customImages[sideImageId]
                 });
             });
         });
 
         container.innerHTML = images.map(image => `
             <div class="image-card" data-product="${image.productName}" data-color="${image.colorName}">
-                <img src="${image.path}" alt="${image.filename}" class="image-preview" 
-                     onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+CjxwYXRoIGQ9Ik0xMDAgNzVMMTIwIDk1SDE1MFY2MFoiIGZpbGw9IiNEREREREQiLz4KPC9zdmc+'">
+                <div class="image-preview-container">
+                    <img src="${image.path}" alt="${image.filename}" class="image-preview" 
+                         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjVGNUY1Ii8+CjxwYXRoIGQ9Ik0xMDAgNzVMMTIwIDk1SDE1MFY2MFoiIGZpbGw9IiNEREREREQiLz4KPC9zdmc+'">
+                    ${image.isCustom ? '<div class="custom-badge">自定义</div>' : ''}
+                </div>
                 <div class="image-info">
                     <h5>${image.productName} - ${image.colorName}</h5>
                     <p>${image.type}</p>
                     <div class="image-actions">
                         <button class="btn btn-primary" onclick="adminSystem.previewImage('${image.path}')">预览</button>
                         <button class="btn btn-secondary" onclick="adminSystem.replaceImage('${image.id}')">替换</button>
+                        ${image.isCustom ? `<button class="btn btn-warning" onclick="adminSystem.resetImage('${image.id}')">重置</button>` : ''}
                         <button class="btn btn-danger" onclick="adminSystem.deleteImage('${image.id}')">删除</button>
                     </div>
                 </div>
@@ -649,7 +673,7 @@ class AdminSystem {
         this.showAlert('颜色添加成功', 'success');
     }
 
-    // 上传图片（模拟）
+    // 上传图片
     uploadImage() {
         const product = document.getElementById('uploadProduct').value;
         const color = document.getElementById('uploadColor').value;
@@ -661,9 +685,47 @@ class AdminSystem {
             return;
         }
 
-        // 实际项目中这里应该上传到服务器
-        this.showAlert('图片上传功能需要后端支持', 'info');
-        this.hideModal();
+        // 检查文件类型
+        if (!file.type.startsWith('image/')) {
+            this.showAlert('请选择图片文件', 'error');
+            return;
+        }
+
+        // 检查文件大小（限制5MB）
+        if (file.size > 5 * 1024 * 1024) {
+            this.showAlert('图片文件大小不能超过5MB', 'error');
+            return;
+        }
+
+        const imageId = `${product}-${color}-${type}`;
+        
+        // 显示加载状态
+        const saveBtn = document.getElementById('modalSave');
+        const originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 上传中...';
+        saveBtn.disabled = true;
+
+        // 读取文件并转换为base64
+        this.processImageFile(file, (base64Data) => {
+            const customImages = JSON.parse(localStorage.getItem('adminImages')) || {};
+            customImages[imageId] = base64Data;
+            localStorage.setItem('adminImages', JSON.stringify(customImages));
+            
+            // 恢复按钮状态
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+            
+            this.hideModal();
+            this.loadImages();
+            this.loadDashboard();
+            this.showAlert('图片上传成功', 'success');
+        }, (error) => {
+            // 恢复按钮状态
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+            
+            this.showAlert('图片处理失败: ' + error, 'error');
+        });
     }
 
     // 编辑产品
@@ -846,15 +908,104 @@ class AdminSystem {
         window.open(imagePath, '_blank');
     }
 
-    // 替换图片（模拟）
+    // 替换图片
     replaceImage(imageId) {
-        this.showAlert('替换图片功能需要后端支持', 'info');
+        document.getElementById('modalTitle').textContent = '替换图片';
+        document.getElementById('modalBody').innerHTML = `
+            <div class="form-group">
+                <label>当前图片ID: ${imageId}</label>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">选择新的图片文件来替换当前图片</p>
+            </div>
+            <div class="form-group">
+                <label for="replaceImageFile">选择新图片</label>
+                <input type="file" id="replaceImageFile" accept="image/*" required>
+            </div>
+            <div class="form-group">
+                <small style="color: var(--text-muted);">
+                    支持的格式：JPG、PNG、GIF、WEBP<br>
+                    最大文件大小：5MB
+                </small>
+            </div>
+        `;
+        
+        document.getElementById('modalSave').onclick = () => this.doReplaceImage(imageId);
+        this.showModal();
     }
 
-    // 删除图片（模拟）
+    // 执行图片替换
+    doReplaceImage(imageId) {
+        const file = document.getElementById('replaceImageFile').files[0];
+
+        if (!file) {
+            this.showAlert('请选择图片文件', 'error');
+            return;
+        }
+
+        // 检查文件类型
+        if (!file.type.startsWith('image/')) {
+            this.showAlert('请选择图片文件', 'error');
+            return;
+        }
+
+        // 检查文件大小（限制5MB）
+        if (file.size > 5 * 1024 * 1024) {
+            this.showAlert('图片文件大小不能超过5MB', 'error');
+            return;
+        }
+
+        // 显示加载状态
+        const saveBtn = document.getElementById('modalSave');
+        const originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 处理中...';
+        saveBtn.disabled = true;
+
+        // 读取文件并转换为base64
+        this.processImageFile(file, (base64Data) => {
+            const customImages = JSON.parse(localStorage.getItem('adminImages')) || {};
+            customImages[imageId] = base64Data;
+            localStorage.setItem('adminImages', JSON.stringify(customImages));
+            
+            // 恢复按钮状态
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+            
+            this.hideModal();
+            this.loadImages();
+            this.showAlert('图片替换成功', 'success');
+        }, (error) => {
+            // 恢复按钮状态
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+            
+            this.showAlert('图片处理失败: ' + error, 'error');
+        });
+    }
+
+    // 重置图片到默认
+    resetImage(imageId) {
+        if (!confirm('确定要重置这张图片到默认状态吗？')) return;
+
+        const customImages = JSON.parse(localStorage.getItem('adminImages')) || {};
+        delete customImages[imageId];
+        localStorage.setItem('adminImages', JSON.stringify(customImages));
+        
+        this.loadImages();
+        this.showAlert('图片已重置到默认状态', 'success');
+    }
+
+    // 删除自定义图片
     deleteImage(imageId) {
-        if (!confirm('确定要删除这张图片吗？')) return;
-        this.showAlert('删除图片功能需要后端支持', 'info');
+        if (!confirm('确定要删除这张自定义图片吗？')) return;
+
+        const customImages = JSON.parse(localStorage.getItem('adminImages')) || {};
+        if (customImages[imageId]) {
+            delete customImages[imageId];
+            localStorage.setItem('adminImages', JSON.stringify(customImages));
+            this.loadImages();
+            this.showAlert('自定义图片已删除', 'success');
+        } else {
+            this.showAlert('这是默认图片，无法删除', 'warning');
+        }
     }
 
     // 显示模态框
@@ -870,6 +1021,73 @@ class AdminSystem {
     // 保存模态框（占位符）
     saveModal() {
         // 具体实现在各个功能中定义
+    }
+
+    // 处理图片文件
+    processImageFile(file, successCallback, errorCallback) {
+        try {
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                try {
+                    const img = new Image();
+                    img.onload = () => {
+                        try {
+                            // 创建canvas进行图片压缩和优化
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            
+                            // 计算压缩后的尺寸（最大1200px）
+                            let { width, height } = img;
+                            const maxSize = 1200;
+                            
+                            if (width > maxSize || height > maxSize) {
+                                if (width > height) {
+                                    height = (height * maxSize) / width;
+                                    width = maxSize;
+                                } else {
+                                    width = (width * maxSize) / height;
+                                    height = maxSize;
+                                }
+                            }
+                            
+                            canvas.width = width;
+                            canvas.height = height;
+                            
+                            // 绘制并压缩图片
+                            ctx.fillStyle = '#ffffff';
+                            ctx.fillRect(0, 0, width, height);
+                            ctx.drawImage(img, 0, 0, width, height);
+                            
+                            // 转换为base64，质量为0.85
+                            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+                            successCallback(compressedBase64);
+                            
+                        } catch (error) {
+                            errorCallback('图片处理失败: ' + error.message);
+                        }
+                    };
+                    
+                    img.onerror = () => {
+                        errorCallback('无法加载图片文件');
+                    };
+                    
+                    img.src = e.target.result;
+                    
+                } catch (error) {
+                    errorCallback('读取图片数据失败: ' + error.message);
+                }
+            };
+            
+            reader.onerror = () => {
+                errorCallback('文件读取失败');
+            };
+            
+            reader.readAsDataURL(file);
+            
+        } catch (error) {
+            errorCallback('文件处理失败: ' + error.message);
+        }
     }
 
     // 显示提示信息

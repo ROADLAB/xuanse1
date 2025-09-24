@@ -50,6 +50,22 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentProduct = localStorage.getItem('selectedProduct') || 'flat';
     let currentColor = localStorage.getItem('selectedColor') || defaultColor;
 
+    // 获取自定义图片（如果有的话）
+    function getImageUrl(productCode, colorCode, view) {
+        const customImages = JSON.parse(localStorage.getItem('adminImages') || '{}');
+        const imageId = `${productCode}-${colorCode}-${view}`;
+        
+        // 如果有自定义图片，使用自定义图片
+        if (customImages[imageId]) {
+            return customImages[imageId];
+        }
+        
+        // 否则使用默认图片
+        const productName = productNames[productCode];
+        const colorName = colorNames[colorCode];
+        return `images/${productName}-${colorName}${view === 'side' ? '-侧视图' : ''}.jpg`;
+    }
+
     // 恢复保存的选择状态
     function restoreSelection() {
         // 恢复产品选择
@@ -187,11 +203,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const img = container.querySelector('.preview-image');
             const currentSrc = img.src;
             
-            // 构建图片URL
-            const imageUrl = `images/${productName}-${colorName}${view === 'side' ? '-侧视图' : ''}.jpg`;
+            // 获取正确的图片URL（自定义图片优先）
+            const imageUrl = getImageUrl(currentProduct, currentColor, view);
 
-            // 如果URL相同，跳过更新
-            if (currentSrc.endsWith(imageUrl)) {
+            // 如果新的URL与当前URL相同，则跳过
+            if (currentSrc === imageUrl || (currentSrc.endsWith(imageUrl) && !imageUrl.startsWith('data:'))) {
                 return { status: 'fulfilled', url: imageUrl };
             }
 
@@ -199,7 +215,14 @@ document.addEventListener('DOMContentLoaded', function() {
             container.classList.add('loading');
 
             try {
-                // 检查图片是否存在
+                // 如果是base64图片（自定义上传的图片），直接显示
+                if (imageUrl.startsWith('data:')) {
+                    img.src = imageUrl;
+                    container.classList.remove('loading');
+                    return { status: 'fulfilled', url: imageUrl };
+                }
+                
+                // 检查默认图片是否存在
                 await checkImage(imageUrl);
                 
                 // 如果图片已经缓存，立即显示
@@ -225,7 +248,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('图片加载失败:', imageUrl);
                 // 侧视图失败时保持当前图片，正视图失败时使用默认图片
                 if (view !== 'side') {
-                    img.src = 'images/平板台面-亚马逊蓝' + (view === 'side' ? '-侧视图' : '') + '.jpg';
+                    img.src = getImageUrl('flat', 'amazon', view); // 使用默认图片
                 }
                 return { status: 'rejected', url: imageUrl, error };
             } finally {

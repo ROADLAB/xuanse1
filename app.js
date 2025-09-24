@@ -50,6 +50,22 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentProduct = localStorage.getItem('selectedProduct') || 'flat';
     let currentColor = localStorage.getItem('selectedColor') || defaultColor;
 
+    // 获取自定义图片（如果有的话）
+    function getImageUrl(productCode, colorCode, view) {
+        const customImages = JSON.parse(localStorage.getItem('adminImages') || '{}');
+        const imageId = `${productCode}-${colorCode}-${view}`;
+        
+        // 如果有自定义图片，使用自定义图片
+        if (customImages[imageId]) {
+            return customImages[imageId];
+        }
+        
+        // 否则使用默认图片
+        const productName = productNames[productCode];
+        const colorName = colorNames[colorCode];
+        return `images/${productName}-${colorName}${view === 'side' ? '-侧视图' : ''}.jpg`;
+    }
+
     // 恢复保存的选择状态
     function restoreSelection() {
         // 恢复产品选择
@@ -221,20 +237,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 更新图片函数
     async function updateImages() {
-        const productName = productNames[currentProduct];
-        const colorName = colorNames[currentColor];
-        
         // 并行处理所有图片容器，使用Promise.allSettled来处理可能的错误
         const updatePromises = Array.from(imageContainers).map(async (container) => {
             const view = container.dataset.view;
             const img = container.querySelector('.preview-image');
             const currentSrc = img.src;
             
-            // 构建图片URL，使用中文名称
-            const imageUrl = `images/${productName}-${colorName}${view === 'side' ? '-侧视图' : ''}.jpg`;
+            // 获取正确的图片URL（自定义图片优先）
+            const imageUrl = getImageUrl(currentProduct, currentColor, view);
 
             // 如果新的URL与当前URL相同，则跳过
-            if (currentSrc.endsWith(imageUrl)) {
+            if (currentSrc === imageUrl || (currentSrc.endsWith(imageUrl) && !imageUrl.startsWith('data:'))) {
                 return { status: 'fulfilled', url: imageUrl };
             }
 
@@ -242,7 +255,14 @@ document.addEventListener('DOMContentLoaded', function() {
             container.classList.add('loading');
 
             try {
-                // 检查图片是否存在
+                // 如果是base64图片（自定义上传的图片），直接显示
+                if (imageUrl.startsWith('data:')) {
+                    img.src = imageUrl;
+                    container.classList.remove('loading');
+                    return { status: 'fulfilled', url: imageUrl };
+                }
+                
+                // 检查默认图片是否存在
                 await checkImage(imageUrl);
                 
                 // 如果图片已经缓存，立即显示
@@ -270,7 +290,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (view === 'side' && currentSrc && !currentSrc.includes('images/')) {
                     // 保持当前图片不变
                 } else {
-                    img.src = 'images/平板台面-亚马逊蓝' + (view === 'side' ? '-侧视图' : '') + '.jpg'; // 使用默认图片
+                    img.src = getImageUrl('flat', 'amazon', view); // 使用默认图片
                 }
                 return { status: 'rejected', url: imageUrl, error };
             } finally {
