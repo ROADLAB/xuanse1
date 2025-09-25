@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片批量压缩工具</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .upload-area { border: 2px dashed #ccc; padding: 40px; text-align: center; margin: 20px 0; }
+        .upload-area.dragover { border-color: #007bff; background: #f8f9fa; }
+        .progress { width: 100%; height: 20px; background: #f0f0f0; border-radius: 10px; overflow: hidden; margin: 10px 0; }
+        .progress-bar { height: 100%; background: #007bff; width: 0%; transition: width 0.3s; }
+        .result-item { margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .compression-info { color: #28a745; font-weight: bold; }
+        .download-btn { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        .download-btn:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>🖼️ 图片批量压缩工具</h1>
+    <p>将您的图片拖拽到下方区域，或点击选择文件。此工具将图片压缩至合适的网页大小，通常可减少70-80%的文件大小。</p>
+    
+    <div class="upload-area" id="uploadArea">
+        <p>📁 拖拽图片文件到这里，或点击选择文件</p>
+        <input type="file" id="fileInput" multiple accept="image/*" style="display: none;">
+        <button onclick="document.getElementById('fileInput').click()" class="download-btn">选择图片文件</button>
+    </div>
+    
+    <div style="margin: 20px 0;">
+        <label>压缩质量: <input type="range" id="quality" min="50" max="95" value="75"> <span id="qualityValue">75</span>%</label><br>
+        <label>最大宽度: <input type="number" id="maxWidth" value="1200" min="400" max="2000"> px</label>
+    </div>
+    
+    <div class="progress" id="progressContainer" style="display: none;">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    
+    <div id="results"></div>
+    
+    <button id="downloadAll" class="download-btn" style="display: none;">📥 下载所有压缩图片</button>
+    
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const qualitySlider = document.getElementById('quality');
+        const qualityValue = document.getElementById('qualityValue');
+        const maxWidthInput = document.getElementById('maxWidth');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const results = document.getElementById('results');
+        const downloadAllBtn = document.getElementById('downloadAll');
+        
+        let compressedFiles = [];
+        
+        // 质量滑块
+        qualitySlider.addEventListener('input', () => {
+            qualityValue.textContent = qualitySlider.value;
+        });
+        
+        // 拖拽功能
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+        
+        async function handleFiles(files) {
+            const fileArray = Array.from(files);
+            compressedFiles = [];
+            results.innerHTML = '';
+            progressContainer.style.display = 'block';
+            downloadAllBtn.style.display = 'none';
+            
+            for (let i = 0; i < fileArray.length; i++) {
+                const file = fileArray[i];
+                const progress = ((i + 1) / fileArray.length) * 100;
+                progressBar.style.width = progress + '%';
+                
+                if (file.type.startsWith('image/')) {
+                    await compressImage(file);
+                }
+            }
+            
+            progressContainer.style.display = 'none';
+            if (compressedFiles.length > 1) {
+                downloadAllBtn.style.display = 'block';
+            }
+        }
+        
+        async function compressImage(file) {
+            return new Promise((resolve) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                
+                img.onload = () => {
+                    // 计算新尺寸
+                    const maxWidth = parseInt(maxWidthInput.value);
+                    let { width, height } = img;
+                    
+                    if (width > maxWidth) {
+                        height = (height * maxWidth) / width;
+                        width = maxWidth;
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    // 绘制图片
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // 压缩
+                    const quality = qualitySlider.value / 100;
+                    canvas.toBlob((blob) => {
+                        const originalSize = file.size;
+                        const compressedSize = blob.size;
+                        const compressionRatio = ((originalSize - compressedSize) / originalSize * 100).toFixed(1);
+                        
+                        // 创建下载链接
+                        const url = URL.createObjectURL(blob);
+                        const fileName = file.name.replace(/\.(png|jpg|jpeg|webp)$/i, '_compressed.jpg');
+                        
+                        compressedFiles.push({ url, fileName, blob });
+                        
+                        // 显示结果
+                        const resultItem = document.createElement('div');
+                        resultItem.className = 'result-item';
+                        resultItem.innerHTML = `
+                            <strong>${file.name}</strong><br>
+                            原始大小: ${(originalSize / 1024).toFixed(1)} KB → 
+                            压缩后: ${(compressedSize / 1024).toFixed(1)} KB
+                            <span class="compression-info">(减少 ${compressionRatio}%)</span><br>
+                            <button class="download-btn" onclick="downloadFile('${url}', '${fileName}')">下载压缩图片</button>
+                        `;
+                        results.appendChild(resultItem);
+                        
+                        resolve();
+                    }, 'image/jpeg', quality);
+                };
+                
+                img.src = URL.createObjectURL(file);
+            });
+        }
+        
+        function downloadFile(url, fileName) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            a.click();
+        }
+        
+        downloadAllBtn.addEventListener('click', () => {
+            compressedFiles.forEach(file => {
+                downloadFile(file.url, file.fileName);
+            });
+        });
+    </script>
+    
+    <div style="margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 5px;">
+        <h3>📋 使用说明</h3>
+        <ol>
+            <li>选择或拖拽图片文件到上方区域</li>
+            <li>调整压缩质量(推荐75%)和最大宽度(推荐1200px)</li>
+            <li>等待压缩完成后下载压缩图片</li>
+            <li>将压缩后的图片替换网站images文件夹中的原图片</li>
+            <li>重新部署网站即可享受更快的加载速度</li>
+        </ol>
+        <p><strong>💡 提示:</strong> 此工具在您的浏览器中本地运行，不会上传任何文件到服务器，完全安全。</p>
+    </div>
+</body>
+</html>

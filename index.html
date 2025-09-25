@@ -23,7 +23,21 @@
     <link rel="preload" href="images/平板台面-亚马逊蓝.jpg" as="image" media="(min-width: 768px)">
     <link rel="preload" href="images/平板台面-亚马逊蓝-侧视图.jpg" as="image" media="(min-width: 768px)">
     
-    <link rel="stylesheet" href="styles.css?v=20250925-2">
+    <!-- 内联关键CSS -->
+    <style>
+        /* 关键CSS - 立即渲染 */
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:Inter,'Microsoft YaHei',sans-serif;background:#fff;min-height:100vh;display:flex;justify-content:center;align-items:center;-webkit-font-smoothing:antialiased}
+        .container{max-width:1920px;width:100%;margin:0 auto;padding:0 138px}
+        .nav-group{display:flex;gap:20px;min-height:120px;justify-content:center}
+        .image-group{display:flex;gap:20px;margin-top:10px;flex-wrap:wrap}
+        .image-container{position:relative;flex:1;min-width:300px;aspect-ratio:16/9;border:1px solid #EAEAEA;border-radius:6px;overflow:hidden;cursor:pointer;background:#F5F5F5}
+        .preview-image{width:100%;height:100%;object-fit:cover;transition:opacity 0.3s ease}
+        .loading-spinner{position:absolute;top:50%;left:50%;width:40px;height:40px;margin:-20px 0 0 -20px;border:4px solid #f3f3f3;border-top:4px solid #EE7300;border-radius:50%;animation:spin 1s linear infinite;display:none}
+        @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+    </style>
+    <link rel="preload" href="styles.css?v=20250925-2" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=20250925-2"></noscript>
     <script>
         // 移动端跳转
         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {

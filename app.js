@@ -350,27 +350,37 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // 启用图片观察器进行懒加载优化
-    if ('IntersectionObserver' in window) {
-        const imageObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const img = entry.target;
-                    if (!img.src || img.src === window.location.href) {
-                        // 为图片设置正确的src
-                        updateImages();
-                    }
-                    imageObserver.unobserve(img);
-                }
-            });
-        }, {
-            rootMargin: '50px 0px',
-            threshold: 0.1
+    // 实现激进的图片懒加载和优化
+    function initImageOptimization() {
+        // 1. 只预加载当前显示的图片
+        const currentImages = document.querySelectorAll('.preview-image');
+        currentImages.forEach(img => {
+            // 添加低质量占位符
+            img.style.filter = 'blur(5px)';
+            img.style.transition = 'filter 0.3s ease';
+            
+            img.onload = () => {
+                img.style.filter = 'none';
+            };
         });
-        
-        // 观察所有图片
-        document.querySelectorAll('.preview-image').forEach(img => {
-            imageObserver.observe(img);
-        });
+
+        // 2. 延迟预加载非关键资源
+        setTimeout(() => {
+            preloadProductImages(currentProduct);
+        }, 2000); // 延迟2秒预加载
+
+        // 3. 网络感知预加载
+        if ('connection' in navigator) {
+            const connection = navigator.connection;
+            if (connection.effectiveType === '4g' && !connection.saveData) {
+                // 只在4G且未开启省流量模式时预加载
+                setTimeout(() => {
+                    preloadProductImages(currentProduct);
+                }, 1000);
+            }
+        }
     }
+    
+    // 启用图片优化
+    initImageOptimization();
 }); 

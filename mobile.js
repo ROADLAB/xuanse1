@@ -339,10 +339,46 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // 移动端优化：使用Passive Event Listeners
-    const passiveEventOptions = { passive: true };
+    // 移动端专用优化
+    function initMobileOptimization() {
+        // 1. 图片质量自适应
+        const images = document.querySelectorAll('.preview-image');
+        images.forEach(img => {
+            // 添加加载效果
+            img.style.filter = 'blur(3px)';
+            img.style.transition = 'filter 0.2s ease';
+            
+            img.onload = () => {
+                img.style.filter = 'none';
+            };
+            
+            // 移动端使用较低质量的图片（如果支持）
+            const originalSrc = img.src;
+            img.onerror = () => {
+                img.src = originalSrc; // 降级到原图
+            };
+        });
+        
+        // 2. 触摸优化
+        const passiveEventOptions = { passive: true };
+        document.addEventListener('touchstart', () => {}, passiveEventOptions);
+        document.addEventListener('touchmove', () => {}, passiveEventOptions);
+        
+        // 3. 减少预加载在移动端的频率
+        const connection = navigator.connection;
+        if (connection && (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g' || connection.saveData)) {
+            // 慢网络下禁用预加载
+            return;
+        }
+        
+        // 4. 延迟预加载
+        setTimeout(() => {
+            if (window.innerWidth <= 768) { // 移动端
+                preloadProductImages(currentProduct);
+            }
+        }, 3000); // 移动端延迟更久
+    }
     
-    // 优化触摸事件
-    document.addEventListener('touchstart', () => {}, passiveEventOptions);
-    document.addEventListener('touchmove', () => {}, passiveEventOptions);
+    // 启用移动端优化
+    initMobileOptimization();
 }); 
