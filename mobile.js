@@ -50,11 +50,34 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentProduct = localStorage.getItem('selectedProduct') || 'flat';
     let currentColor = localStorage.getItem('selectedColor') || defaultColor;
 
-    // 获取图片URL
+    // 获取图片URL - 支持WebP格式
     function getImageUrl(productCode, colorCode, view) {
         const productName = productNames[productCode];
         const colorName = colorNames[colorCode];
-        return `images/${productName}-${colorName}${view === 'side' ? '-侧视图' : ''}.jpg`;
+        const baseName = `${productName}-${colorName}${view === 'side' ? '-侧视图' : ''}`;
+        
+        // 检查浏览器是否支持WebP
+        if (supportsWebP()) {
+            // 优先尝试WebP格式
+            return `images/${baseName}.webp`;
+        } else {
+            // 降级到JPEG格式
+            return `images/${baseName}.jpg`;
+        }
+    }
+    
+    // 检测WebP支持
+    function supportsWebP() {
+        if (typeof supportsWebP.cache !== 'undefined') {
+            return supportsWebP.cache;
+        }
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = 1;
+        canvas.height = 1;
+        const dataURL = canvas.toDataURL('image/webp');
+        supportsWebP.cache = dataURL.indexOf('data:image/webp') === 0;
+        return supportsWebP.cache;
     }
 
 
@@ -238,9 +261,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 
             } catch (error) {
                 console.log('图片加载失败:', imageUrl);
-                // 侧视图失败时保持当前图片，正视图失败时使用默认图片
+                
+                // WebP加载失败时，尝试降级到JPEG
+                if (imageUrl.endsWith('.webp')) {
+                    const jpegUrl = imageUrl.replace('.webp', '.jpg');
+                    try {
+                        await checkImage(jpegUrl);
+                        img.src = jpegUrl;
+                        container.classList.remove('loading');
+                        return { status: 'fulfilled', url: jpegUrl };
+                    } catch (jpegError) {
+                        console.log('JPEG降级也失败:', jpegUrl);
+                    }
+                }
+                
+                // 最终降级处理
                 if (view !== 'side') {
-                    img.src = getImageUrl('flat', 'amazon', view); // 使用默认图片
+                    // 使用默认JPEG图片
+                    const defaultUrl = `images/平板台面-亚马逊蓝${view === 'side' ? '-侧视图' : ''}.jpg`;
+                    img.src = defaultUrl;
                 }
                 return { status: 'rejected', url: imageUrl, error };
             } finally {
