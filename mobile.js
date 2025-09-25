@@ -50,7 +50,18 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentProduct = localStorage.getItem('selectedProduct') || 'flat';
     let currentColor = localStorage.getItem('selectedColor') || defaultColor;
 
-    // 获取自定义图片（如果有的话）
+    // 检测WebP支持
+    function supportsWebP() {
+        if (typeof supportsWebP.result === 'undefined') {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1;
+            canvas.height = 1;
+            supportsWebP.result = canvas.toDataURL('image/webp').indexOf('image/webp') === 5;
+        }
+        return supportsWebP.result;
+    }
+
+    // 获取优化的图片URL（支持WebP格式）
     function getImageUrl(productCode, colorCode, view) {
         try {
             const customImages = JSON.parse(localStorage.getItem('adminImages') || '{}');
@@ -76,11 +87,12 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.removeItem('adminImages');
         }
         
-        // 使用默认图片
+        // 使用优化的默认图片（支持WebP格式）
         const productName = productNames[productCode];
         const colorName = colorNames[colorCode];
-        const defaultUrl = `images/${productName}-${colorName}${view === 'side' ? '-侧视图' : ''}.jpg`;
-        console.log(`使用默认图片: ${defaultUrl}`);
+        const extension = supportsWebP() ? 'webp' : 'jpg';
+        const defaultUrl = `images/${productName}-${colorName}${view === 'side' ? '-侧视图' : ''}.${extension}`;
+        console.log(`使用${supportsWebP() ? 'WebP' : 'JPEG'}格式: ${defaultUrl}`);
         return defaultUrl;
     }
 
@@ -159,34 +171,90 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 预加载产品的所有颜色图片
-    function preloadProductImages(product) {
+    // 智能预加载策略 - 基于用户行为和网络条件
+    function smartPreloadImages(product) {
         const availableColors = productAvailableColors[product];
-        const productName = productNames[product];
+        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        const isSlowConnection = connection && (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g');
         
-        // 预加载常用颜色的图片
-        const priorityColors = ['amazon', 'black', 'grey']; // 优先预加载的颜色
+        // 根据网络条件调整预加载策略
+        const priorityColors = isSlowConnection ? ['amazon'] : ['amazon', 'black', 'grey']; 
         const preloadPromises = [];
         
-        availableColors.forEach(color => {
-            const colorName = colorNames[color];
-            const frontUrl = `images/${productName}-${colorName}.jpg`;
-            const sideUrl = `images/${productName}-${colorName}-侧视图.jpg`;
+        // 立即预加载当前选中的图片
+        const currentFrontUrl = getImageUrl(product, currentColor, 'front');
+        const currentSideUrl = getImageUrl(product, currentColor, 'side');
+        preloadPromises.push(preloadImage(currentFrontUrl));
+        preloadPromises.push(preloadImage(currentSideUrl));
+        
+        // 预加载优先颜色
+        availableColors.forEach((color, index) => {
+            if (color === currentColor) return; // 当前颜色已预加载
             
-            // 优先颜色立即预加载，其他颜色延迟预加载
+            const frontUrl = getImageUrl(product, color, 'front');
+            const sideUrl = getImageUrl(product, color, 'side');
+            
             if (priorityColors.includes(color)) {
-                preloadPromises.push(preloadImage(frontUrl));
-                preloadPromises.push(preloadImage(sideUrl));
-            } else {
-                // 延迟预加载非优先颜色
+                // 优先颜色延迟100ms预加载（避免阻塞当前图片）
                 setTimeout(() => {
                     preloadImage(frontUrl);
                     preloadImage(sideUrl);
-                }, 1000);
+                }, 100 + index * 50);
+            } else if (!isSlowConnection) {
+                // 慢网络下跳过非优先颜色，快网络下延迟预加载
+                setTimeout(() => {
+                    preloadImage(frontUrl);
+                    preloadImage(sideUrl);
+                }, 2000 + index * 200);
             }
         });
         
         return Promise.all(preloadPromises);
+    }
+    
+    // 预测性加载 - 根据用户行为模式
+    let userBehavior = {
+        colorSwitchCount: {},
+        lastColors: [],
+        preferences: JSON.parse(localStorage.getItem('userPreferences') || '{}')
+    };
+    
+    function recordUserBehavior(product, color) {
+        const key = `${product}-${color}`;
+        userBehavior.colorSwitchCount[key] = (userBehavior.colorSwitchCount[key] || 0) + 1;
+        userBehavior.lastColors.push(key);
+        if (userBehavior.lastColors.length > 10) {
+            userBehavior.lastColors.shift();
+        }
+        
+        // 保存用户偏好
+        userBehavior.preferences[product] = color;
+        localStorage.setItem('userPreferences', JSON.stringify(userBehavior.preferences));
+    }
+    
+    function predictivePreload(product) {
+        // 基于历史行为预测用户可能选择的颜色
+        const availableColors = productAvailableColors[product];
+        const scores = availableColors.map(color => {
+            const key = `${product}-${color}`;
+            const switchCount = userBehavior.colorSwitchCount[key] || 0;
+            const recentUse = userBehavior.lastColors.includes(key) ? 2 : 0;
+            const isPreferred = userBehavior.preferences[product] === color ? 3 : 0;
+            return { color, score: switchCount + recentUse + isPreferred };
+        });
+        
+        // 按分数排序，预加载前3个最可能的颜色
+        scores.sort((a, b) => b.score - a.score);
+        scores.slice(0, 3).forEach((item, index) => {
+            if (item.color !== currentColor) {
+                setTimeout(() => {
+                    const frontUrl = getImageUrl(product, item.color, 'front');
+                    const sideUrl = getImageUrl(product, item.color, 'side');
+                    preloadImage(frontUrl);
+                    preloadImage(sideUrl);
+                }, 1000 + index * 500);
+            }
+        });
     }
 
     // 更新颜色按钮显示状态
@@ -290,7 +358,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 添加触摸事件处理
+    // 添加触摸事件处理 - 集成智能预加载
     function handleTouchStart(e) {
         e.preventDefault();
         const button = e.target.closest('.nav-item');
@@ -300,20 +368,58 @@ document.addEventListener('DOMContentLoaded', function() {
         const isColor = button.hasAttribute('data-color');
 
         if (isProduct) {
-            currentProduct = button.dataset.product;
-            productNav.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            button.classList.add('active');
-            currentColor = defaultColor;
-            updateColorButtons(currentProduct);
-            const defaultButton = colorNav.querySelector(`[data-color="${defaultColor}"]`);
-            colorNav.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            defaultButton.classList.add('active');
-            // 预加载新产品的常用颜色图片
-            preloadProductImages(currentProduct);
+            const newProduct = button.dataset.product;
+            if (newProduct !== currentProduct) {
+                currentProduct = newProduct;
+                productNav.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+                button.classList.add('active');
+                
+                // 智能选择颜色：优先使用用户偏好，否则使用默认
+                const preferredColor = userBehavior.preferences[currentProduct] || defaultColor;
+                currentColor = productAvailableColors[currentProduct].includes(preferredColor) ? preferredColor : defaultColor;
+                
+                updateColorButtons(currentProduct);
+                const selectedButton = colorNav.querySelector(`[data-color="${currentColor}"]`);
+                colorNav.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+                selectedButton.classList.add('active');
+                
+                // 记录用户行为
+                recordUserBehavior(currentProduct, currentColor);
+                
+                // 使用智能预加载策略
+                smartPreloadImages(currentProduct);
+                
+                // 启动预测性加载
+                setTimeout(() => predictivePreload(currentProduct), 3000);
+            }
         } else if (isColor) {
-            currentColor = button.dataset.color;
-            colorNav.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            button.classList.add('active');
+            const newColor = button.dataset.color;
+            if (newColor !== currentColor) {
+                currentColor = newColor;
+                colorNav.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+                button.classList.add('active');
+                
+                // 记录用户行为
+                recordUserBehavior(currentProduct, currentColor);
+                
+                // 预加载相邻颜色（用户可能会点击）
+                const colorButtons = Array.from(colorNav.querySelectorAll('.nav-item:not([style*="display: none"])'));
+                const currentIndex = colorButtons.findIndex(btn => btn.dataset.color === currentColor);
+                
+                // 预加载左右相邻的颜色
+                [-1, 1].forEach(offset => {
+                    const adjacentIndex = currentIndex + offset;
+                    if (adjacentIndex >= 0 && adjacentIndex < colorButtons.length) {
+                        const adjacentColor = colorButtons[adjacentIndex].dataset.color;
+                        setTimeout(() => {
+                            const frontUrl = getImageUrl(currentProduct, adjacentColor, 'front');
+                            const sideUrl = getImageUrl(currentProduct, adjacentColor, 'side');
+                            preloadImage(frontUrl);
+                            preloadImage(sideUrl);
+                        }, 500);
+                    }
+                });
+            }
         }
 
         saveSelection();
@@ -352,8 +458,11 @@ document.addEventListener('DOMContentLoaded', function() {
     restoreSelection();
     updateImages();
     
-    // 初始化时预加载当前产品的图片
-    preloadProductImages(currentProduct);
+    // 使用智能预加载策略
+    smartPreloadImages(currentProduct);
+    
+    // 启动预测性加载
+    setTimeout(() => predictivePreload(currentProduct), 2000);
 
     // 加载自定义favicon（如果有的话）
     function loadCustomFavicon() {
