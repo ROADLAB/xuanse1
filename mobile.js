@@ -52,26 +52,38 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 获取自定义图片（如果有的话）
     function getImageUrl(productCode, colorCode, view) {
-        const customImages = JSON.parse(localStorage.getItem('adminImages') || '{}');
-        const imageId = `${productCode}-${colorCode}-${view}`;
-        
-        // 如果有自定义图片，使用自定义图片
-        if (customImages[imageId]) {
-            return customImages[imageId];
+        try {
+            const customImages = JSON.parse(localStorage.getItem('adminImages') || '{}');
+            const imageId = `${productCode}-${colorCode}-${view}`;
+            
+            // 如果有自定义图片，验证其有效性
+            if (customImages[imageId]) {
+                const customUrl = customImages[imageId];
+                // 验证base64数据的有效性
+                if (customUrl && customUrl.startsWith('data:image/') && customUrl.length > 50) {
+                    console.log(`使用自定义图片: ${imageId}`);
+                    return customUrl;
+                } else {
+                    console.warn(`自定义图片数据损坏，删除: ${imageId}`);
+                    // 删除损坏的数据
+                    delete customImages[imageId];
+                    localStorage.setItem('adminImages', JSON.stringify(customImages));
+                }
+            }
+        } catch (error) {
+            console.error('处理localStorage数据出错:', error);
+            // 如果localStorage数据完全损坏，清理它
+            localStorage.removeItem('adminImages');
         }
         
-        // 否则使用默认图片
+        // 使用默认图片
         const productName = productNames[productCode];
         const colorName = colorNames[colorCode];
-        return `images/${productName}-${colorName}${view === 'side' ? '-侧视图' : ''}.jpg`;
+        const defaultUrl = `images/${productName}-${colorName}${view === 'side' ? '-侧视图' : ''}.jpg`;
+        console.log(`使用默认图片: ${defaultUrl}`);
+        return defaultUrl;
     }
 
-    // 临时调试函数：清理localStorage中可能损坏的图片缓存
-    function debugClearImageCache() {
-        console.log('清理图片缓存...');
-        localStorage.removeItem('adminImages');
-        console.log('已清理localStorage中的图片缓存');
-    }
 
     // 恢复保存的选择状态
     function restoreSelection() {
@@ -337,9 +349,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }, { passive: false });
 
     // 初始化
-    // 临时清理可能损坏的图片缓存
-    debugClearImageCache();
-    
     restoreSelection();
     updateImages();
     
