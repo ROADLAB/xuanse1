@@ -11,7 +11,7 @@
             "src": "/.*\\.css",
             "headers": {
                 "Content-Type": "text/css",
-                "Cache-Control": "public, max-age=3600"
+                "Cache-Control": "public, max-age=604800"
             }
         },
         {
