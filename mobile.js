@@ -66,6 +66,13 @@ document.addEventListener('DOMContentLoaded', function() {
         return `images/${productName}-${colorName}${view === 'side' ? '-侧视图' : ''}.jpg`;
     }
 
+    // 临时调试函数：清理localStorage中可能损坏的图片缓存
+    function debugClearImageCache() {
+        console.log('清理图片缓存...');
+        localStorage.removeItem('adminImages');
+        console.log('已清理localStorage中的图片缓存');
+    }
+
     // 恢复保存的选择状态
     function restoreSelection() {
         // 恢复产品选择
@@ -197,6 +204,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const productName = productNames[currentProduct];
         const colorName = colorNames[currentColor];
         
+        console.log(`正在加载图片: ${currentProduct}(${productName}) - ${currentColor}(${colorName})`);
+        
         // 并行处理两个图片容器，使用Promise.allSettled来处理可能的错误
         const updatePromises = Array.from(imageContainers).map(async (container) => {
             const view = container.dataset.view;
@@ -205,9 +214,12 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // 获取正确的图片URL（自定义图片优先）
             const imageUrl = getImageUrl(currentProduct, currentColor, view);
+            
+            console.log(`${view}视图: 目标URL = ${imageUrl}, 当前URL = ${currentSrc}`);
 
             // 如果新的URL与当前URL相同，则跳过
             if (currentSrc === imageUrl || (currentSrc.endsWith(imageUrl) && !imageUrl.startsWith('data:'))) {
+                console.log(`${view}视图: URL相同，跳过加载`);
                 return { status: 'fulfilled', url: imageUrl };
             }
 
@@ -325,6 +337,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }, { passive: false });
 
     // 初始化
+    // 临时清理可能损坏的图片缓存
+    debugClearImageCache();
+    
     restoreSelection();
     updateImages();
     
