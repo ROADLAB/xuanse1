@@ -15,65 +15,45 @@
                     "value": "nosniff"
                 },
                 {
-                    "key": "X-Frame-Options",
+                    "key": "X-Frame-Options", 
                     "value": "DENY"
                 },
                 {
                     "key": "X-XSS-Protection",
                     "value": "1; mode=block"
+                },
+                {
+                    "key": "Cache-Control",
+                    "value": "public, max-age=0, s-maxage=86400, stale-while-revalidate=86400"
                 }
             ]
-        }
-    ],
-    "routes": [
-        {
-            "src": "/.*\\.css",
-            "headers": {
-                "Content-Type": "text/css",
-                "Cache-Control": "public, max-age=31536000, immutable",
-                "Content-Encoding": "gzip"
-            }
         },
         {
-            "src": "/.*\\.js",
-            "headers": {
-                "Content-Type": "application/javascript",
-                "Cache-Control": "public, max-age=31536000, immutable",
-                "Content-Encoding": "gzip"
-            }
+            "source": "/.*\\.(css|js)",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "public, max-age=31536000, immutable"
+                }
+            ]
         },
         {
-            "src": "/.*\\.(jpg|jpeg|png|gif|webp|avif)",
-            "headers": {
-                "Cache-Control": "public, max-age=31536000, immutable",
-                "Vary": "Accept"
-            }
+            "source": "/.*\\.(jpg|jpeg|png|gif|webp|avif|svg)",
+            "headers": [
+                {
+                    "key": "Cache-Control", 
+                    "value": "public, max-age=31536000, immutable"
+                }
+            ]
         },
         {
-            "src": "/.*\\.svg",
-            "headers": {
-                "Content-Type": "image/svg+xml",
-                "Cache-Control": "public, max-age=31536000, immutable",
-                "Content-Encoding": "gzip"
-            }
-        },
-        {
-            "src": "/.*\\.(woff2|woff)",
-            "headers": {
-                "Cache-Control": "public, max-age=31536000, immutable",
-                "Content-Encoding": "gzip"
-            }
-        },
-        {
-            "src": "/.*\\.(html|htm)",
-            "headers": {
-                "Cache-Control": "public, max-age=0, s-maxage=86400, stale-while-revalidate=86400",
-                "Content-Encoding": "gzip"
-            }
-        },
-        {
-            "src": "/(.*)",
-            "dest": "/$1"
+            "source": "/.*\\.(woff2|woff)",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "public, max-age=31536000, immutable"
+                }
+            ]
         }
     ]
 } 
