@@ -50,17 +50,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentProduct = localStorage.getItem('selectedProduct') || 'flat';
     let currentColor = localStorage.getItem('selectedColor') || defaultColor;
 
-    // 获取自定义图片（如果有的话）
+    // 获取图片URL
     function getImageUrl(productCode, colorCode, view) {
-        const customImages = JSON.parse(localStorage.getItem('adminImages') || '{}');
-        const imageId = `${productCode}-${colorCode}-${view}`;
-        
-        // 如果有自定义图片，使用自定义图片
-        if (customImages[imageId]) {
-            return customImages[imageId];
-        }
-        
-        // 否则使用默认图片
         const productName = productNames[productCode];
         const colorName = colorNames[colorCode];
         return `images/${productName}-${colorName}${view === 'side' ? '-侧视图' : ''}.jpg`;
@@ -140,34 +131,42 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 预加载产品的所有颜色图片
+    // 优化的图片预加载策略
     function preloadProductImages(product) {
         const availableColors = productAvailableColors[product];
-        const productName = productNames[product];
         
-        // 预加载常用颜色的图片
-        const priorityColors = ['amazon', 'black', 'grey']; // 优先预加载的颜色
-        const preloadPromises = [];
+        // 优先预加载常用颜色，使用requestIdleCallback优化性能
+        const priorityColors = ['amazon', 'black', 'grey'];
         
-        availableColors.forEach(color => {
-            const colorName = colorNames[color];
-            const frontUrl = `images/${productName}-${colorName}.jpg`;
-            const sideUrl = `images/${productName}-${colorName}-侧视图.jpg`;
-            
-            // 优先颜色立即预加载，其他颜色延迟预加载
-            if (priorityColors.includes(color)) {
-                preloadPromises.push(preloadImage(frontUrl));
-                preloadPromises.push(preloadImage(sideUrl));
+        // 使用requestIdleCallback在浏览器空闲时预加载
+        const schedulePreload = (callback) => {
+            if ('requestIdleCallback' in window) {
+                requestIdleCallback(callback, { timeout: 2000 });
             } else {
-                // 延迟预加载非优先颜色
-                setTimeout(() => {
+                setTimeout(callback, 100);
+            }
+        };
+        
+        availableColors.forEach((color, index) => {
+            const frontUrl = getImageUrl(product, color, 'front');
+            const sideUrl = getImageUrl(product, color, 'side');
+            
+            if (priorityColors.includes(color)) {
+                // 优先颜色立即预加载
+                schedulePreload(() => {
                     preloadImage(frontUrl);
                     preloadImage(sideUrl);
-                }, 1000);
+                });
+            } else {
+                // 其他颜色延迟预加载，错开请求时间
+                schedulePreload(() => {
+                    setTimeout(() => {
+                        preloadImage(frontUrl);
+                        preloadImage(sideUrl);
+                    }, 500 + index * 200);
+                });
             }
         });
-        
-        return Promise.all(preloadPromises);
     }
 
     // 更新颜色按钮显示状态
@@ -243,11 +242,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const img = container.querySelector('.preview-image');
             const currentSrc = img.src;
             
-            // 获取正确的图片URL（自定义图片优先）
+            // 获取图片URL
             const imageUrl = getImageUrl(currentProduct, currentColor, view);
 
             // 如果新的URL与当前URL相同，则跳过
-            if (currentSrc === imageUrl || (currentSrc.endsWith(imageUrl) && !imageUrl.startsWith('data:'))) {
+            if (currentSrc.endsWith(imageUrl)) {
                 return { status: 'fulfilled', url: imageUrl };
             }
 
@@ -255,14 +254,7 @@ document.addEventListener('DOMContentLoaded', function() {
             container.classList.add('loading');
 
             try {
-                // 如果是base64图片（自定义上传的图片），直接显示
-                if (imageUrl.startsWith('data:')) {
-                    img.src = imageUrl;
-                    container.classList.remove('loading');
-                    return { status: 'fulfilled', url: imageUrl };
-                }
-                
-                // 检查默认图片是否存在
+                // 检查图片是否存在
                 await checkImage(imageUrl);
                 
                 // 如果图片已经缓存，立即显示
@@ -339,27 +331,46 @@ document.addEventListener('DOMContentLoaded', function() {
     // 初始化图片
     updateImages();
     
-    // 初始化时预加载当前产品的图片
-    preloadProductImages(currentProduct);
-
-    // 加载自定义favicon（如果有的话）
-    function loadCustomFavicon() {
-        const customFavicon = localStorage.getItem('adminFavicon');
-        if (customFavicon && customFavicon !== 'favicon.svg') {
-            const faviconLinks = [
-                document.getElementById('favicon-link'),
-                document.getElementById('favicon-fallback'),
-                document.getElementById('favicon-apple')
-            ];
-
-            faviconLinks.forEach(link => {
-                if (link) {
-                    link.href = customFavicon;
-                }
-            });
-        }
+    // 使用requestIdleCallback在空闲时预加载图片
+    if ('requestIdleCallback' in window) {
+        requestIdleCallback(() => {
+            preloadProductImages(currentProduct);
+        }, { timeout: 1000 });
+    } else {
+        setTimeout(() => {
+            preloadProductImages(currentProduct);
+        }, 500);
     }
 
-    // 加载自定义favicon
-    loadCustomFavicon();
+    // 优化的数据清理
+    const adminKeys = ['adminImages', 'adminFavicon', 'adminUser', 'adminProducts', 'adminColors', 'adminSettings'];
+    adminKeys.forEach(key => {
+        if (localStorage.getItem(key)) {
+            localStorage.removeItem(key);
+        }
+    });
+    
+    // 启用图片观察器进行懒加载优化
+    if ('IntersectionObserver' in window) {
+        const imageObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    if (!img.src || img.src === window.location.href) {
+                        // 为图片设置正确的src
+                        updateImages();
+                    }
+                    imageObserver.unobserve(img);
+                }
+            });
+        }, {
+            rootMargin: '50px 0px',
+            threshold: 0.1
+        });
+        
+        // 观察所有图片
+        document.querySelectorAll('.preview-image').forEach(img => {
+            imageObserver.observe(img);
+        });
+    }
 }); 

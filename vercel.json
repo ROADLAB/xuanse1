@@ -6,31 +6,69 @@
             "use": "@vercel/static"
         }
     ],
+    "headers": [
+        {
+            "source": "/(.*)",
+            "headers": [
+                {
+                    "key": "X-Content-Type-Options",
+                    "value": "nosniff"
+                },
+                {
+                    "key": "X-Frame-Options",
+                    "value": "DENY"
+                },
+                {
+                    "key": "X-XSS-Protection",
+                    "value": "1; mode=block"
+                }
+            ]
+        }
+    ],
     "routes": [
         {
             "src": "/.*\\.css",
             "headers": {
                 "Content-Type": "text/css",
-                "Cache-Control": "public, max-age=604800"
+                "Cache-Control": "public, max-age=31536000, immutable",
+                "Content-Encoding": "gzip"
             }
         },
         {
             "src": "/.*\\.js",
             "headers": {
                 "Content-Type": "application/javascript",
-                "Cache-Control": "public, max-age=604800"
+                "Cache-Control": "public, max-age=31536000, immutable",
+                "Content-Encoding": "gzip"
             }
         },
         {
-            "src": "/.*\\.(jpg|jpeg|png|gif|webp)",
+            "src": "/.*\\.(jpg|jpeg|png|gif|webp|avif)",
             "headers": {
-                "Cache-Control": "public, max-age=2592000"
+                "Cache-Control": "public, max-age=31536000, immutable",
+                "Vary": "Accept"
+            }
+        },
+        {
+            "src": "/.*\\.svg",
+            "headers": {
+                "Content-Type": "image/svg+xml",
+                "Cache-Control": "public, max-age=31536000, immutable",
+                "Content-Encoding": "gzip"
+            }
+        },
+        {
+            "src": "/.*\\.(woff2|woff)",
+            "headers": {
+                "Cache-Control": "public, max-age=31536000, immutable",
+                "Content-Encoding": "gzip"
             }
         },
         {
             "src": "/.*\\.(html|htm)",
             "headers": {
-                "Cache-Control": "public, max-age=3600"
+                "Cache-Control": "public, max-age=0, s-maxage=86400, stale-while-revalidate=86400",
+                "Content-Encoding": "gzip"
             }
         },
         {

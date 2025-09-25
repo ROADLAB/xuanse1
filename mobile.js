@@ -50,29 +50,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentProduct = localStorage.getItem('selectedProduct') || 'flat';
     let currentColor = localStorage.getItem('selectedColor') || defaultColor;
 
-    // 获取图片URL - 简化高效版本
+    // 获取图片URL
     function getImageUrl(productCode, colorCode, view) {
-        try {
-            const customImages = JSON.parse(localStorage.getItem('adminImages') || '{}');
-            const imageId = `${productCode}-${colorCode}-${view}`;
-            
-            // 如果有自定义图片，验证其有效性
-            if (customImages[imageId]) {
-                const customUrl = customImages[imageId];
-                // 验证base64数据的有效性
-                if (customUrl && customUrl.startsWith('data:image/') && customUrl.length > 50) {
-                    return customUrl;
-                } else {
-                    // 删除损坏的数据
-                    delete customImages[imageId];
-                    localStorage.setItem('adminImages', JSON.stringify(customImages));
-                }
-            }
-        } catch (error) {
-            localStorage.removeItem('adminImages');
-        }
-        
-        // 使用默认JPEG图片
         const productName = productNames[productCode];
         const colorName = colorNames[colorCode];
         return `images/${productName}-${colorName}${view === 'side' ? '-侧视图' : ''}.jpg`;
@@ -153,29 +132,42 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 简化的高效预加载策略
+    // 移动端优化的预加载策略
     function preloadProductImages(product) {
         const availableColors = productAvailableColors[product];
-        
-        // 预加载常用颜色的图片，延迟加载避免阻塞主要内容
         const priorityColors = ['amazon', 'black', 'grey'];
+        
+        // 检测网络连接类型，在慢网络下减少预加载
+        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        const isSlowConnection = connection && (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g');
+        
+        // 使用requestIdleCallback优化性能
+        const schedulePreload = (callback, delay = 0) => {
+            if ('requestIdleCallback' in window && !isSlowConnection) {
+                requestIdleCallback(() => {
+                    setTimeout(callback, delay);
+                }, { timeout: 2000 });
+            } else if (!isSlowConnection) {
+                setTimeout(callback, delay + 200);
+            }
+        };
         
         availableColors.forEach((color, index) => {
             const frontUrl = getImageUrl(product, color, 'front');
             const sideUrl = getImageUrl(product, color, 'side');
             
             if (priorityColors.includes(color)) {
-                // 优先颜色延迟200ms预加载
-                setTimeout(() => {
+                // 优先颜色预加载
+                schedulePreload(() => {
                     preloadImage(frontUrl);
                     preloadImage(sideUrl);
-                }, 200 + index * 100);
-            } else {
-                // 其他颜色延迟1.5秒预加载
-                setTimeout(() => {
+                }, index * 100);
+            } else if (!isSlowConnection) {
+                // 在快网络下才预加载其他颜色
+                schedulePreload(() => {
                     preloadImage(frontUrl);
                     preloadImage(sideUrl);
-                }, 1500 + index * 150);
+                }, 1000 + index * 200);
             }
         });
     }
@@ -214,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const imageUrl = getImageUrl(currentProduct, currentColor, view);
 
             // 如果新的URL与当前URL相同，则跳过
-            if (currentSrc === imageUrl || (currentSrc.endsWith(imageUrl) && !imageUrl.startsWith('data:'))) {
+            if (currentSrc.endsWith(imageUrl)) {
                 return { status: 'fulfilled', url: imageUrl };
             }
 
@@ -222,14 +214,7 @@ document.addEventListener('DOMContentLoaded', function() {
             container.classList.add('loading');
 
             try {
-                // 如果是base64图片（自定义上传的图片），直接显示
-                if (imageUrl.startsWith('data:')) {
-                    img.src = imageUrl;
-                    container.classList.remove('loading');
-                    return { status: 'fulfilled', url: imageUrl };
-                }
-                
-                // 检查默认图片是否存在
+                    // 检查图片是否存在
                 await checkImage(imageUrl);
                 
                 // 如果图片已经缓存，立即显示
@@ -335,27 +320,29 @@ document.addEventListener('DOMContentLoaded', function() {
     restoreSelection();
     updateImages();
     
-    // 初始化时预加载当前产品的图片
-    preloadProductImages(currentProduct);
-
-    // 加载自定义favicon（如果有的话）
-    function loadCustomFavicon() {
-        const customFavicon = localStorage.getItem('adminFavicon');
-        if (customFavicon && customFavicon !== 'favicon.svg') {
-            const faviconLinks = [
-                document.getElementById('favicon-link'),
-                document.getElementById('favicon-fallback'),
-                document.getElementById('favicon-apple')
-            ];
-
-            faviconLinks.forEach(link => {
-                if (link) {
-                    link.href = customFavicon;
-                }
-            });
-        }
+    // 使用requestIdleCallback在空闲时预加载图片
+    if ('requestIdleCallback' in window) {
+        requestIdleCallback(() => {
+            preloadProductImages(currentProduct);
+        }, { timeout: 1000 });
+    } else {
+        setTimeout(() => {
+            preloadProductImages(currentProduct);
+        }, 300);
     }
 
-    // 加载自定义favicon
-    loadCustomFavicon();
+    // 优化的数据清理
+    const adminKeys = ['adminImages', 'adminFavicon', 'adminUser', 'adminProducts', 'adminColors', 'adminSettings'];
+    adminKeys.forEach(key => {
+        if (localStorage.getItem(key)) {
+            localStorage.removeItem(key);
+        }
+    });
+    
+    // 移动端优化：使用Passive Event Listeners
+    const passiveEventOptions = { passive: true };
+    
+    // 优化触摸事件
+    document.addEventListener('touchstart', () => {}, passiveEventOptions);
+    document.addEventListener('touchmove', () => {}, passiveEventOptions);
 }); 

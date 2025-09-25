@@ -316,4 +316,57 @@ body {
             opacity: 0.5;
         }
     }
+}
+
+/* 移动端性能优化 */
+html {
+    font-display: swap;
+    scroll-behavior: smooth;
+}
+
+body {
+    contain: layout style;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* GPU加速优化 */
+.nav-item {
+    transform: translateZ(0);
+    will-change: transform, background-color;
+}
+
+.modal {
+    will-change: opacity, visibility;
+    contain: layout style paint;
+}
+
+.container {
+    contain: layout;
+}
+
+.nav-group, .preview-section {
+    contain: layout style;
+}
+
+/* 图片性能优化 */
+.preview-image {
+    content-visibility: auto;
+    image-rendering: optimizeQuality;
+    will-change: transform;
+    backface-visibility: hidden;
+}
+
+/* 减少布局抖动 */
+.image-container {
+    contain: layout size;
+}
+
+.loading-indicator {
+    contain: strict;
+}
+
+/* 触摸优化 */
+.nav-item, .image-container {
+    touch-action: manipulation;
 } 

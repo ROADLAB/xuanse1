@@ -583,4 +583,67 @@ body {
     .image-container:hover {
         transform: none;
     }
+}
+
+/* 性能优化 */
+html {
+    font-display: swap;
+    scroll-behavior: smooth;
+}
+
+body {
+    contain: layout style;
+}
+
+/* GPU加速优化 */
+.nav-item {
+    transform: translateZ(0);
+    will-change: transform, background-color;
+}
+
+.modal {
+    will-change: opacity, visibility;
+    contain: layout style paint;
+}
+
+.container {
+    contain: layout;
+}
+
+.nav-group, .image-group {
+    contain: layout style;
+}
+
+/* 图片性能优化 */
+.preview-image {
+    content-visibility: auto;
+    image-rendering: optimizeQuality;
+}
+
+/* 减少布局抖动 */
+.image-container {
+    contain: layout size;
+}
+
+.loading-spinner {
+    contain: strict;
+}
+
+/* 预连接优化 */
+.image-container::before {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 0;
+    padding-bottom: 56.25%; /* 16:9 宽高比 */
+}
+
+.image-container {
+    position: relative;
+}
+
+.preview-image {
+    position: absolute;
+    top: 0;
+    left: 0;
 } 

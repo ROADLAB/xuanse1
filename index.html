@@ -4,9 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="实验室台面产品展示与颜色选择">
+    <meta name="keywords" content="实验室台面,台面产品,颜色选择,平板台面,碟型台面,沝水槽台面">
     <meta name="theme-color" content="#ffffff">
     <meta name="format-detection" content="telephone=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="robots" content="index,follow">
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
     <title>榕德实验室台面台面配色方案</title>
     
     <!-- Favicon -->
@@ -17,8 +20,8 @@
     <!-- 预加载关键资源 -->
     <link rel="preload" href="styles.css" as="style">
     <link rel="preload" href="app.js" as="script">
-    <link rel="preload" href="images/平板台面-亚马逊蓝.jpg" as="image">
-    <link rel="preload" href="images/平板台面-亚马逊蓝-侧视图.jpg" as="image">
+    <link rel="preload" href="images/平板台面-亚马逊蓝.jpg" as="image" media="(min-width: 768px)">
+    <link rel="preload" href="images/平板台面-亚马逊蓝-侧视图.jpg" as="image" media="(min-width: 768px)">
     
     <link rel="stylesheet" href="styles.css">
     <script>
@@ -64,11 +67,21 @@
         <div class="image-group">
             <div class="image-container" data-view="front">
                 <div class="loading-spinner"></div>
-                <img src="images/平板台面-亚马逊蓝.jpg" alt="正视图" class="preview-image" loading="lazy">
+                <img src="images/平板台面-亚马逊蓝.jpg" 
+                     alt="平板台面-亚马逊蓝 正视图" 
+                     class="preview-image" 
+                     loading="eager"
+                     fetchpriority="high"
+                     decoding="async">
             </div>
             <div class="image-container" data-view="side">
                 <div class="loading-spinner"></div>
-                <img src="images/平板台面-亚马逊蓝-侧视图.jpg" alt="侧视图" class="preview-image" loading="lazy">
+                <img src="images/平板台面-亚马逊蓝-侧视图.jpg" 
+                     alt="平板台面-亚马逊蓝 侧视图" 
+                     class="preview-image" 
+                     loading="eager"
+                     fetchpriority="high"
+                     decoding="async">
             </div>
         </div>
     </div>
@@ -81,6 +94,16 @@
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script src="app.js" defer></script>
+    <!-- 清理不需要的localStorage数据 -->
+    <script>
+        // 清理可能的管理后台残留数据
+        const adminKeys = ['adminImages', 'adminFavicon', 'adminUser', 'adminProducts', 'adminColors', 'adminSettings'];
+        adminKeys.forEach(key => {
+            if (localStorage.getItem(key)) {
+                localStorage.removeItem(key);
+            }
+        });
+    </script>
 </body>
 </html> 
