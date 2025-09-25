@@ -10,6 +10,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="robots" content="index,follow">
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <title>榕德实验室陶瓷台面配色方案</title>
     
     <!-- Favicon -->
@@ -109,6 +112,42 @@
     </div>
 
     <script src="app.js?v=20250925-2" defer></script>
+    <!-- 性能监控和CDN优化 -->
+    <script>
+        // 性能监控
+        window.addEventListener('load', function() {
+            if ('performance' in window) {
+                const perfData = performance.getEntriesByType('navigation')[0];
+                const loadTime = perfData.loadEventEnd - perfData.loadEventStart;
+                const domContentLoaded = perfData.domContentLoadedEventEnd - perfData.domContentLoadedEventStart;
+                
+                console.log('页面性能数据:');
+                console.log('DOM加载时间:', domContentLoaded + 'ms');
+                console.log('页面完全加载时间:', loadTime + 'ms');
+                console.log('DNS查询时间:', perfData.domainLookupEnd - perfData.domainLookupStart + 'ms');
+                console.log('TCP连接时间:', perfData.connectEnd - perfData.connectStart + 'ms');
+                console.log('首字节时间:', perfData.responseStart - perfData.requestStart + 'ms');
+                
+                // 如果加载时间超过3秒，记录警告
+                if (loadTime > 3000) {
+                    console.warn('页面加载较慢，可能需要优化CDN或网络连接');
+                }
+            }
+        });
+        
+        // 图片加载性能监控
+        document.addEventListener('DOMContentLoaded', function() {
+            const images = document.querySelectorAll('img');
+            images.forEach(img => {
+                img.addEventListener('load', function() {
+                    const loadTime = performance.now() - performance.getEntriesByName(img.src)[0].startTime;
+                    if (loadTime > 1000) {
+                        console.warn('图片加载较慢:', img.src, loadTime + 'ms');
+                    }
+                });
+            });
+        });
+    </script>
     <!-- 清理不需要的localStorage数据 -->
     <script>
         // 清理可能的管理后台残留数据
